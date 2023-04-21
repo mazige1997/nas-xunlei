@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::borrow::Cow;
 
 use anyhow::Context;
 
