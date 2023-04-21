@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    io::Write,
     os::unix::prelude::{OsStrExt, PermissionsExt},
     path::PathBuf,
 };
@@ -48,14 +49,16 @@ pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<
     let res = unsafe { libc::chown(c_filename.as_ptr(), uid, gid) };
     if res != 0 {
         let errno = std::io::Error::last_os_error();
-        return Err(anyhow::anyhow!("libc error: {}", errno));
+        return Err(anyhow::anyhow!("chown {} error: {}", target_path, errno));
     }
     Ok(())
 }
 
 pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyhow::Result<()> {
     let mut target_file = std::fs::File::create(target_path)?;
-    std::io::Write::write_all(&mut target_file, &content)?;
+    target_file
+        .write_all(&content)
+        .context(format!("write data to {} error", target_path.display()))?;
     std::fs::set_permissions(target_path, std::fs::Permissions::from_mode(mode)).context(
         format!(
             "Failed to set permissions: {} -- {}",
@@ -63,6 +66,7 @@ pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyho
             mode
         ),
     )?;
+
     Ok(())
 }
 

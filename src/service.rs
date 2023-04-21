@@ -27,22 +27,16 @@ impl Install {
         let port = env::var("XUNLEI_PORT")
             .ok()
             .and_then(|port| port.parse::<u32>().ok())
-            .unwrap_or(5051);
+            .unwrap_or(5055);
 
         let internal = env::var("XUNLEI_INTERNAL")
             .ok()
             .and_then(|internal| internal.parse::<bool>().ok())
             .unwrap_or(false);
 
-        let uid = env::var("UID")
-            .ok()
-            .and_then(|uid| uid.parse::<u32>().ok())
-            .unwrap();
+        let uid = unsafe { libc::getuid() };
 
-        let gid: u32 = env::var("GID")
-            .ok()
-            .and_then(|gid| gid.parse::<u32>().ok())
-            .unwrap();
+        let gid = unsafe { libc::getgid() };
 
         let _config_path = env::var("XUNLEI_DOWNLOAD_DIR")
             .ok()
@@ -95,14 +89,12 @@ impl Install {
 
         standard::create_dir_all(&target_dir, 0o755)?;
 
-        log::info!("Installing xunlei...");
         for file in XunleiAsset::iter() {
             let filename = file.as_ref();
             let target_filepath = target_dir.join(filename);
-
-            let data = XunleiAsset::get(filename)?;
+            let data = XunleiAsset::get(filename).context("Read data failure")?;
             standard::write_file(&target_filepath, data, 0o755)?;
-            log::info!("dump file: {}", target_filepath.display())
+            log::info!("install to: {}", target_filepath.display());
         }
 
         standard::set_permissions(standard::SYNOPKG_PKGBASE, self.uid, self.gid).context(
@@ -123,16 +115,11 @@ impl Install {
             ),
         )?;
 
-        standard::set_permissions(host_dir.to_str().unwrap(), self.uid, self.gid).context(
-            format!(
-                "Failed to set permission: {}, PUID:{}, GUID:{}",
-                target_dir.display(),
-                self.uid,
-                self.gid
-            ),
-        )?;
-
-        let sys_info_path = host_dir.join(standard::SYNO_INFO_PATH);
+        let sys_info_path = PathBuf::from(format!(
+            "{}{}",
+            host_dir.display(),
+            standard::SYNO_INFO_PATH
+        ));
         standard::create_dir_all(&sys_info_path.parent().unwrap().to_path_buf(), 0o755)?;
 
         let mut rb = vec![0u8; 32];
@@ -144,7 +131,11 @@ impl Install {
             0o644,
         )?;
 
-        let syno_authenticate_path = host_dir.join(standard::SYNO_AUTHENTICATE_PATH);
+        let syno_authenticate_path = PathBuf::from(format!(
+            "{}{}",
+            host_dir.display(),
+            standard::SYNO_AUTHENTICATE_PATH
+        ));
         standard::create_dir_all(
             &syno_authenticate_path.parent().unwrap().to_path_buf(),
             0o755,
@@ -158,21 +149,29 @@ impl Install {
 
         // symlink
         unsafe {
-            let source_sys_info_path = std::ffi::CString::new(sys_info_path.display().to_string())?;
-            let target_sys_info_path = std::ffi::CString::new(standard::SYNO_INFO_PATH)?;
-            if libc::symlink(source_sys_info_path.as_ptr(), target_sys_info_path.as_ptr()) != 0 {
-                anyhow::bail!(std::io::Error::last_os_error());
+            if !PathBuf::from(standard::SYNO_INFO_PATH).exists() {
+                let source_sys_info_path =
+                    std::ffi::CString::new(sys_info_path.display().to_string())?;
+                let target_sys_info_path = std::ffi::CString::new(standard::SYNO_INFO_PATH)?;
+                if libc::symlink(source_sys_info_path.as_ptr(), target_sys_info_path.as_ptr()) != 0
+                {
+                    anyhow::bail!(std::io::Error::last_os_error());
+                }
             }
 
-            let source_syno_authenticate_path =
-                std::ffi::CString::new(syno_authenticate_path.display().to_string())?;
-            let target_syno_authenticate_path = std::ffi::CString::new(standard::SYNO_INFO_PATH)?;
-            if libc::symlink(
-                source_syno_authenticate_path.as_ptr(),
-                target_syno_authenticate_path.as_ptr(),
-            ) != 0
-            {
-                anyhow::bail!(std::io::Error::last_os_error());
+            if !PathBuf::from(standard::SYNO_AUTHENTICATE_PATH).exists() {
+                let source_syno_authenticate_path =
+                    std::ffi::CString::new(syno_authenticate_path.display().to_string())?;
+                let target_syno_authenticate_path =
+                    std::ffi::CString::new(standard::SYNO_AUTHENTICATE_PATH)?;
+
+                if libc::symlink(
+                    source_syno_authenticate_path.as_ptr(),
+                    target_syno_authenticate_path.as_ptr(),
+                ) != 0
+                {
+                    anyhow::bail!(std::io::Error::last_os_error());
+                }
             }
         }
 
@@ -233,14 +232,21 @@ pub struct Uninstall;
 
 impl Uninstall {
     pub fn remove_service_file(&self) -> anyhow::Result<()> {
-        std::fs::remove_file(PathBuf::from(standard::SYSTEMCTL_UNIT_FILE))?;
-        log::info!("Uninstall systemctl service");
+        let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
+        if path.exists() {
+            std::fs::remove_file(path)?;
+            log::info!("[Uninstall] Uninstall systemctl service");
+        }
         Ok(())
     }
 
     pub fn remove_package(&self) -> anyhow::Result<()> {
-        std::fs::remove_dir_all(PathBuf::from(standard::SYNOPKG_PKGBASE))?;
-        log::info!("Uninstall xunlei package");
+        let path = PathBuf::from(standard::SYNOPKG_PKGBASE);
+        if path.exists() {
+            std::fs::remove_dir_all(path)?;
+            log::info!("[Uninstall] Uninstall xunlei package");
+        }
+
         Ok(())
     }
 }
@@ -261,10 +267,15 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<std::ffi::OsStr> + std::convert::AsRef<std::ffi::OsStr>,
 {
-    log::info!("Operating the systemctl service");
     let output = std::process::Command::new("systemctl")
         .args(args)
         .output()?;
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    let status = output.status;
+    if !status.success() {
+        log::error!(
+            "[systemctl] {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
     Ok(())
 }

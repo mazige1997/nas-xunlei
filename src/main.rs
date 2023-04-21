@@ -4,14 +4,13 @@ pub mod standard;
 pub mod xunlei_asset;
 use std::io::Write;
 
-use daemon::XunleiDaemon;
 use xunlei_asset::XunleiAsset;
 
 fn main() -> anyhow::Result<()> {
     init_log();
 
     {
-        println!("{:?}", XunleiAsset::get_version()?);
+        println!("{:?}", XunleiAsset::version()?);
     }
     Ok(())
 }

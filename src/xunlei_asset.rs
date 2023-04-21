@@ -9,7 +9,7 @@ struct Asset;
 pub struct XunleiAsset;
 
 impl XunleiAsset {
-    pub fn get_version() -> anyhow::Result<String> {
+    pub fn version() -> anyhow::Result<String> {
         let version_bin = Asset::get("version").context("Failed to get version asset")?;
         let version = std::str::from_utf8(version_bin.data.as_ref())
             .context("Error getting version number!")?;
@@ -17,7 +17,7 @@ impl XunleiAsset {
     }
 
     pub fn get(filename: &str) -> anyhow::Result<Cow<[u8]>> {
-        let bin = Asset::get(filename).context("Failed to get version asset")?;
+        let bin = Asset::get(filename).context("Failed to get bin asset")?;
         Ok(bin.data)
     }
 
