@@ -4,14 +4,15 @@ pub mod standard;
 pub mod xunlei_asset;
 use std::io::Write;
 
+use daemon::XunleiDaemon;
+use service::XunleiUninstall;
 use xunlei_asset::XunleiAsset;
 
 fn main() -> anyhow::Result<()> {
     init_log();
-
-    {
-        println!("{:?}", XunleiAsset::version()?);
-    }
+    println!("{:?}", XunleiAsset::version()?);
+    let uninstall = XunleiUninstall{};
+    uninstall.run()?;
     Ok(())
 }
 

@@ -10,7 +10,7 @@ use crate::xunlei_asset::XunleiAsset;
 use crate::Command;
 
 #[derive(serde::Serialize)]
-pub struct Install {
+pub struct XunleiInstall {
     #[serde(skip_serializing)]
     description: &'static str,
     port: u32,
@@ -22,7 +22,7 @@ pub struct Install {
     download_dir: PathBuf,
 }
 
-impl Install {
+impl XunleiInstall {
     pub fn new() -> Self {
         let port = env::var("XUNLEI_PORT")
             .ok()
@@ -220,7 +220,7 @@ impl Install {
     }
 }
 
-impl Command for Install {
+impl Command for XunleiInstall {
     fn run(&self) -> anyhow::Result<()> {
         self.extract()?;
         self.config()?;
@@ -228,9 +228,9 @@ impl Command for Install {
     }
 }
 
-pub struct Uninstall;
+pub struct XunleiUninstall;
 
-impl Uninstall {
+impl XunleiUninstall {
     pub fn remove_service_file(&self) -> anyhow::Result<()> {
         let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
         if path.exists() {
@@ -251,7 +251,7 @@ impl Uninstall {
     }
 }
 
-impl Command for Uninstall {
+impl Command for XunleiUninstall {
     fn run(&self) -> anyhow::Result<()> {
         systemctl(["disable", standard::APP_NAME])?;
         systemctl(["stop", standard::APP_NAME])?;
