@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, PartialEq)]
-#[structopt(name = "xunlei", version = "3.5.2")]
+#[structopt(name = "Xunlei", version = "3.5.2")]
 struct Opt {
     /// Enable debug
     #[structopt(short, long)]
