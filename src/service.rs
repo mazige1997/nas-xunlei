@@ -1,7 +1,9 @@
 extern crate libc;
 
+use std::borrow::Cow;
+use std::ops::Not;
 use std::path::Path;
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{Context, Ok};
 use rand::Rng;
@@ -14,72 +16,73 @@ use crate::Running;
 pub struct XunleiInstall {
     #[serde(skip_serializing)]
     description: &'static str,
-    port: u32,
     internal: bool,
+    port: u16,
+    download_path: PathBuf,
+    #[serde(skip_serializing)]
+    config_path: PathBuf,
     #[serde(skip_serializing)]
     uid: u32,
     #[serde(skip_serializing)]
     gid: u32,
-    download_dir: PathBuf,
 }
 
 impl XunleiInstall {
-    pub fn new() -> Self {
-        let port = env::var("XUNLEI_PORT")
-            .ok()
-            .and_then(|port| port.parse::<u32>().ok())
-            .unwrap_or(5055);
-
-        let internal = env::var("XUNLEI_INTERNAL")
-            .ok()
-            .and_then(|internal| internal.parse::<bool>().ok())
-            .unwrap_or(false);
-
+    pub fn new(
+        internal: bool,
+        port: Option<u16>,
+        download_path: Option<PathBuf>,
+        config_path: Option<PathBuf>,
+    ) -> anyhow::Result<impl Running> {
+        let port = port.unwrap_or(5055);
         let uid = unsafe { libc::getuid() };
-
         let gid = unsafe { libc::getgid() };
-
-        let _config_path = env::var("XUNLEI_DOWNLOAD_DIR")
-            .ok()
-            .and_then(|_config_path: String| _config_path.parse::<PathBuf>().ok())
-            .unwrap_or(PathBuf::from("/etc/xunlei"));
-
-        let download_dir = env::var("XUNLEI_DOWNLOAD_DIR")
-            .ok()
-            .and_then(|download_dir| download_dir.parse::<PathBuf>().ok())
-            .unwrap_or(PathBuf::from(standard::TMP_DOWNLOAD_PATH));
-        Self {
+        let download_path = download_path.unwrap_or(PathBuf::from(standard::TMP_DOWNLOAD_PATH));
+        let config_path = config_path.unwrap_or(PathBuf::from(standard::SYNOPKG_PKGBASE));
+        Ok(Self {
             description: "Thunder remote download service",
             port,
             internal,
             uid,
             gid,
-            download_dir,
-        }
+            download_path,
+            config_path,
+        })
     }
 
     fn config(&self) -> anyhow::Result<()> {
-        log::info!("Configuration");
-        log::info!("WebUI port: {}", self.port);
-        log::info!("Download Directory: {}", self.download_dir.display());
-        let config_json = serde_json::to_vec(&self).context("Failed serialize to config.json")?;
-        let config_path = PathBuf::from(standard::SYNOPKG_PKGBASE).join("config.json");
-        if let Some(parent) = config_path.parent() {
-            if !parent.exists() {
-                std::fs::create_dir_all(parent)?;
-            }
+        log::info!("[XunleiInstall] Configuration in progress");
+        log::info!("[XunleiInstall] WebUI port: {}", self.port);
+
+        if self.download_path.is_dir().not() {
+            std::fs::create_dir_all(&self.download_path)?;
+            log::info!(
+                "[XunleiInstall] Download directory: {}",
+                self.download_path.display()
+            );
+        } else if self.download_path.is_file() {
+            return Err(anyhow::anyhow!("Download path must be a directory"));
         }
-        let mut options = std::fs::OpenOptions::new();
-        options.write(true);
-        options.create(true);
-        std::os::unix::prelude::OpenOptionsExt::mode(&mut options, 0o666);
-        let mut file = options.open(config_path).context("Failed to create file")?;
-        std::io::Write::write_all(&mut file, &config_json).context("Failed to write to file")?;
+
+        if self.config_path.is_dir().not() {
+            std::fs::create_dir_all(&self.config_path)?;
+            log::info!(
+                "[XunleiInstall] Config directory: {}",
+                self.config_path.display()
+            );
+        } else if self.config_path.is_file() {
+            return Err(anyhow::anyhow!("Config path must be a directory"));
+        }
+
+        let config_file = PathBuf::from(&self.config_path).join(standard::CONFIG_FILE_NAME);
+        let data = serde_json::to_vec(&self).context("Failed serialize config to json")?;
+        standard::write_file(&config_file, Cow::Owned(data), 0o666)?;
+        log::info!("[XunleiInstall] Configuration completed");
         Ok(())
     }
 
     fn extract(&self) -> anyhow::Result<()> {
-        log::info!("[XunleiInstall] Installing...");
+        log::info!("[XunleiInstall] Installing in progress");
 
         // /var/packages/pan-xunlei-com/target
         let target_dir = PathBuf::from(standard::SYNOPKG_PKGDEST);
@@ -129,12 +132,20 @@ impl XunleiInstall {
             ))?,
             0o755,
         )?;
-        let mut rb = vec![0u8; 32];
-        rand::thread_rng().fill(&mut rb[..]);
-        let rs = hex::encode(&rb[..]).chars().take(7).collect::<String>();
+        let mut byte_arr = vec![0u8; 32];
+        rand::thread_rng().fill(&mut byte_arr[..]);
+        let hex_string = byte_arr
+            .iter()
+            .map(|u| format!("{:02x}", *u as u32))
+            .collect::<String>()
+            .chars()
+            .take(7)
+            .collect::<String>();
         standard::write_file(
             &syno_info_path,
-            std::borrow::Cow::Borrowed(format!("unique=\"synology_{}_720+\"", rs).as_bytes()),
+            std::borrow::Cow::Borrowed(
+                format!("unique=\"synology_{}_720+\"", hex_string).as_bytes(),
+            ),
             0o644,
         )?;
 
@@ -195,7 +206,6 @@ impl XunleiInstall {
         }
 
         log::info!("[XunleiInstall] Installation completed");
-
         Ok(())
     }
 
@@ -208,14 +218,16 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart=/var/packages/pan-xunlei-com/xunlei run
+                ExecStart=/var/packages/pan-xunlei-com/xunlei execute -p {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
                 
                 [Install]
                 WantedBy=multi-user.target"#,
-            self.description, self.uid
+            self.description,
+            self.config_path.display(),
+            self.uid
         );
 
         standard::write_file(
@@ -232,9 +244,9 @@ impl XunleiInstall {
 }
 
 impl Running for XunleiInstall {
-    fn run(&self) -> anyhow::Result<()> {
-        self.extract()?;
+    fn execute(&self) -> anyhow::Result<()> {
         self.config()?;
+        self.extract()?;
         self.systemctl()
     }
 }
@@ -246,7 +258,7 @@ impl XunleiUninstall {
         let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
         if path.exists() {
             std::fs::remove_file(path)?;
-            log::info!("[XunleiUninstall] Uninstall systemctl service");
+            log::info!("[XunleiUninstall] Uninstall xunlei service");
         }
         Ok(())
     }
@@ -263,7 +275,7 @@ impl XunleiUninstall {
 }
 
 impl Running for XunleiUninstall {
-    fn run(&self) -> anyhow::Result<()> {
+    fn execute(&self) -> anyhow::Result<()> {
         systemctl(["disable", standard::APP_NAME])?;
         systemctl(["stop", standard::APP_NAME])?;
         self.remove_service_file()?;
@@ -282,7 +294,7 @@ where
         .args(args)
         .output()?;
     let status = output.status;
-    if !status.success() {
+    if status.success().not() {
         log::error!(
             "[systemctl] {}",
             String::from_utf8_lossy(&output.stderr).trim()

@@ -13,10 +13,14 @@ anyhow = "1.0.66"
 rust-embed = "6.6.0"
 libc = "0.2.140"
 rand = "0.8.5"
-hex = "0.4.3"
 serde = { version = "1.0.156", features = ["derive"] }
 serde_json = "1.0.94"
 rouille= "3.6.1"
+structopt = "0.3"
 
 [features]
 daemon = []
+
+[[bin]]
+name = "xunlei"
+path = "src/main.rs"

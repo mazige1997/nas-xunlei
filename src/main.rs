@@ -3,27 +3,74 @@ pub mod service;
 pub mod standard;
 pub mod xunlei_asset;
 use std::io::Write;
-use std::process::Stdio;
 
-extern crate rouille;
+use std::path::PathBuf;
+use structopt::StructOpt;
 
-use rouille::cgi::CgiRun;
-use std::env;
-use std::io;
-use std::process::Command;
+#[derive(StructOpt, Debug, PartialEq)]
+#[structopt(name = "xunlei", version = "3.5.2")]
+struct Opt {
+    /// Enable debug
+    #[structopt(short, long)]
+    debug: bool,
 
-use crate::daemon::XunleiDaemon;
-
-fn main() {
-    println!("Now listening on localhost:8000");
+    #[structopt(subcommand)]
+    cmd: Cmd,
 }
 
-fn init_log() {
-    match std::env::var("RUST_LOG") {
-        Ok(val) => std::env::set_var("RUST_LOG", val),
-        Err(_) => std::env::set_var("RUST_LOG", "INFO"),
-    }
+#[derive(StructOpt, Debug, PartialEq)]
+pub enum Cmd {
+    /// Install xunlei
+    Install {
+        /// Xunlei internal mode
+        #[structopt(short, long)]
+        internal: bool,
+        /// Xunlei web-ui port
+        port: Option<u16>,
+        /// Xunlei config directory
+        #[structopt(short, long)]
+        config_path: Option<PathBuf>,
+        /// Xunlei download directory
+        #[structopt(short, long)]
+        download_path: Option<PathBuf>,
+    },
+    /// Uninstall xunlei
+    Uninstall,
+    /// Execute xunlei daemon
+    Execute {
+        /// Xunlei config directory
+        #[structopt(short, long)]
+        path: Option<PathBuf>,
+    },
+}
 
+fn main() -> anyhow::Result<()> {
+    let opt = Opt::from_args();
+    init_log(opt.debug);
+    match opt.cmd {
+        Cmd::Install {
+            internal,
+            port,
+            download_path,
+            config_path,
+        } => {
+            service::XunleiInstall::new(internal, port, download_path, config_path)?.execute()?;
+        }
+        Cmd::Uninstall => {
+            service::XunleiUninstall {}.execute()?;
+        }
+        Cmd::Execute { path } => {
+            daemon::XunleiDaemon::new(path)?.execute()?;
+        }
+    }
+    Ok(())
+}
+
+fn init_log(debug: bool) {
+    match debug {
+        true => std::env::set_var("RUST_LOG", "DEBUG"),
+        false => std::env::set_var("RUST_LOG", "INFO"),
+    };
     env_logger::builder()
         .format(|buf, record| {
             writeln!(
@@ -39,5 +86,5 @@ fn init_log() {
 }
 
 pub trait Running {
-    fn run(&self) -> anyhow::Result<()>;
+    fn execute(&self) -> anyhow::Result<()>;
 }
