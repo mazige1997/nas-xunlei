@@ -16,6 +16,7 @@ rand = "0.8.5"
 hex = "0.4.3"
 serde = { version = "1.0.156", features = ["derive"] }
 serde_json = "1.0.94"
+rouille= "3.6.1"
 
 [features]
 daemon = []

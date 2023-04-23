@@ -1,5 +1,6 @@
 extern crate libc;
 
+use std::path::Path;
 use std::{env, path::PathBuf};
 
 use anyhow::{Context, Ok};
@@ -7,7 +8,7 @@ use rand::Rng;
 
 use crate::standard;
 use crate::xunlei_asset::XunleiAsset;
-use crate::Command;
+use crate::Running;
 
 #[derive(serde::Serialize)]
 pub struct XunleiInstall {
@@ -78,12 +79,12 @@ impl XunleiInstall {
     }
 
     fn extract(&self) -> anyhow::Result<()> {
-        log::info!("Installing...");
+        log::info!("[XunleiInstall] Installing...");
 
         // /var/packages/pan-xunlei-com/target
-        let target_dir = PathBuf::from(standard::SYNOPKG_PKGBASE).join("target");
+        let target_dir = PathBuf::from(standard::SYNOPKG_PKGDEST);
         // /var/packages/pan-xunlei-com/target/host
-        let host_dir = PathBuf::from(&target_dir).join("host");
+        let host_dir = PathBuf::from(standard::SYNOPKG_HOST);
         // /var/packages/pan-xunlei-com/xunlei
         let start_endpoint = PathBuf::from(standard::SYNOPKG_PKGBASE).join(standard::APP_NAME);
 
@@ -94,7 +95,7 @@ impl XunleiInstall {
             let target_filepath = target_dir.join(filename);
             let data = XunleiAsset::get(filename).context("Read data failure")?;
             standard::write_file(&target_filepath, data, 0o755)?;
-            log::info!("install to: {}", target_filepath.display());
+            log::info!("[XunleiInstall] Install to: {}", target_filepath.display());
         }
 
         standard::set_permissions(standard::SYNOPKG_PKGBASE, self.uid, self.gid).context(
@@ -115,32 +116,41 @@ impl XunleiInstall {
             ),
         )?;
 
-        let sys_info_path = PathBuf::from(format!(
+        // path: /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
+        let syno_info_path = PathBuf::from(format!(
             "{}{}",
             host_dir.display(),
             standard::SYNO_INFO_PATH
         ));
-        standard::create_dir_all(&sys_info_path.parent().unwrap().to_path_buf(), 0o755)?;
-
+        standard::create_dir_all(
+            &syno_info_path.parent().context(format!(
+                "the path: {} parent not exists",
+                syno_info_path.display()
+            ))?,
+            0o755,
+        )?;
         let mut rb = vec![0u8; 32];
         rand::thread_rng().fill(&mut rb[..]);
         let rs = hex::encode(&rb[..]).chars().take(7).collect::<String>();
         standard::write_file(
-            &sys_info_path,
+            &syno_info_path,
             std::borrow::Cow::Borrowed(format!("unique=\"synology_{}_720+\"", rs).as_bytes()),
             0o644,
         )?;
 
+        // path: /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
         let syno_authenticate_path = PathBuf::from(format!(
             "{}{}",
             host_dir.display(),
             standard::SYNO_AUTHENTICATE_PATH
         ));
         standard::create_dir_all(
-            &syno_authenticate_path.parent().unwrap().to_path_buf(),
+            &syno_authenticate_path.parent().context(format!(
+                "the path: {} not exists",
+                syno_authenticate_path.display()
+            ))?,
             0o755,
         )?;
-
         standard::write_file(
             &syno_authenticate_path,
             std::borrow::Cow::Borrowed(String::from("#!/usr/bin/env sh\necho OK").as_bytes()),
@@ -149,9 +159,9 @@ impl XunleiInstall {
 
         // symlink
         unsafe {
-            if !PathBuf::from(standard::SYNO_INFO_PATH).exists() {
+            if !Path::new(standard::SYNO_INFO_PATH).exists() {
                 let source_sys_info_path =
-                    std::ffi::CString::new(sys_info_path.display().to_string())?;
+                    std::ffi::CString::new(syno_info_path.display().to_string())?;
                 let target_sys_info_path = std::ffi::CString::new(standard::SYNO_INFO_PATH)?;
                 if libc::symlink(source_sys_info_path.as_ptr(), target_sys_info_path.as_ptr()) != 0
                 {
@@ -159,7 +169,7 @@ impl XunleiInstall {
                 }
             }
 
-            if !PathBuf::from(standard::SYNO_AUTHENTICATE_PATH).exists() {
+            if !Path::new(standard::SYNO_AUTHENTICATE_PATH).exists() {
                 let source_syno_authenticate_path =
                     std::ffi::CString::new(syno_authenticate_path.display().to_string())?;
                 let target_syno_authenticate_path =
@@ -175,15 +185,16 @@ impl XunleiInstall {
             }
         }
 
-        let exepath = std::env::current_exe()?;
-        if exepath.exists() {
-            log::info!("[extract] {}", start_endpoint.display());
-            if std::fs::copy(exepath, start_endpoint)? == 0 {
+        let exe_path = std::env::current_exe()?;
+        if exe_path.exists() {
+            if std::fs::copy(exe_path, &start_endpoint)? == 0 {
                 log::error!("description Failed to copy the execution file. the length is 0")
+            } else {
+                log::info!("[XunleiInstall] Install to: {}", start_endpoint.display());
             }
         }
 
-        log::info!("Installation completed");
+        log::info!("[XunleiInstall] Installation completed");
 
         Ok(())
     }
@@ -220,7 +231,7 @@ impl XunleiInstall {
     }
 }
 
-impl Command for XunleiInstall {
+impl Running for XunleiInstall {
     fn run(&self) -> anyhow::Result<()> {
         self.extract()?;
         self.config()?;
@@ -235,7 +246,7 @@ impl XunleiUninstall {
         let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
         if path.exists() {
             std::fs::remove_file(path)?;
-            log::info!("[Uninstall] Uninstall systemctl service");
+            log::info!("[XunleiUninstall] Uninstall systemctl service");
         }
         Ok(())
     }
@@ -244,14 +255,14 @@ impl XunleiUninstall {
         let path = PathBuf::from(standard::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
-            log::info!("[Uninstall] Uninstall xunlei package");
+            log::info!("[XunleiUninstall] Uninstall xunlei package");
         }
 
         Ok(())
     }
 }
 
-impl Command for XunleiUninstall {
+impl Running for XunleiUninstall {
     fn run(&self) -> anyhow::Result<()> {
         systemctl(["disable", standard::APP_NAME])?;
         systemctl(["stop", standard::APP_NAME])?;

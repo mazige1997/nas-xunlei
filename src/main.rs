@@ -3,17 +3,19 @@ pub mod service;
 pub mod standard;
 pub mod xunlei_asset;
 use std::io::Write;
+use std::process::Stdio;
 
-use daemon::XunleiDaemon;
-use service::XunleiUninstall;
-use xunlei_asset::XunleiAsset;
+extern crate rouille;
 
-fn main() -> anyhow::Result<()> {
-    init_log();
-    println!("{:?}", XunleiAsset::version()?);
-    let uninstall = XunleiUninstall{};
-    uninstall.run()?;
-    Ok(())
+use rouille::cgi::CgiRun;
+use std::env;
+use std::io;
+use std::process::Command;
+
+use crate::daemon::XunleiDaemon;
+
+fn main() {
+    println!("Now listening on localhost:8000");
 }
 
 fn init_log() {
@@ -36,6 +38,6 @@ fn init_log() {
         .init();
 }
 
-pub trait Command {
+pub trait Running {
     fn run(&self) -> anyhow::Result<()>;
 }

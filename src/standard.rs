@@ -2,7 +2,7 @@ use std::{
     borrow::Cow,
     io::Write,
     os::unix::prelude::{OsStrExt, PermissionsExt},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use anyhow::Context;
@@ -21,6 +21,8 @@ pub const SYNOPKG_PKGNAME: &str = "pan-xunlei-com";
 pub const SYNOPKG_PKGBASE: &str = "/var/packages/pan-xunlei-com";
 pub const SYNOPKG_PKGDEST: &str = "/var/packages/pan-xunlei-com/target";
 pub const SYNOPKG_VAR: &str = "/var/packages/pan-xunlei-com/target/var/";
+pub const SYNOPKG_HOST: &str = "/var/packages/pan-xunlei-com/target/host";
+pub const SYNOPKG_CLI_WEB: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-web";
 
 #[cfg(target_arch = "x86_64")]
 pub const LAUNCHER_EXE: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.amd64";
@@ -41,6 +43,10 @@ pub const LAUNCH_PID_FILE: &str =
 pub const LAUNCH_LOG_FILE: &str =
     "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.log";
 pub const INST_LOG: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com_install.log";
+
+pub const DEFAULT_CONFIG_PATH: &str = "/var/packages/pan-xunlei-com/config";
+
+pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi";
 
 pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<()> {
     let filename = std::ffi::OsStr::new(target_path).as_bytes();
@@ -70,7 +76,7 @@ pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyho
     Ok(())
 }
 
-pub fn create_dir_all(target_path: &PathBuf, mode: u32) -> anyhow::Result<()> {
+pub fn create_dir_all(target_path: &Path, mode: u32) -> anyhow::Result<()> {
     std::fs::create_dir_all(target_path).context(format!(
         "Failed to create folder: {}",
         target_path.display()
