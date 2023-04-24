@@ -1,10 +1,11 @@
 use crate::{standard, Running};
 use anyhow::Context;
-use rouille::cgi::CgiRun;
 use std::{
     collections::HashMap,
     io::Read,
+    ops::Not,
     path::{Path, PathBuf},
+    process::Stdio,
 };
 
 #[derive(Debug, serde::Deserialize)]
@@ -64,25 +65,120 @@ impl XunleiDaemon {
             false => "0.0.0.0",
         };
         rouille::start_server(format!("{}:{}", address, port), move |request| {
-            let path = request.raw_url();
-            if path == "/"
-                || path.starts_with("/webman/")
-                || path.starts_with("/webman/3rdparty/pan-xunlei-com")
-            {
-                let mut cmd = std::process::Command::new(standard::SYNOPKG_CLI_WEB);
-                cmd.current_dir(standard::SYNOPKG_PKGDEST);
-                cmd.envs(&envs);
-                return cmd.start_cgi(request).unwrap();
-            } else if path == "/webman/login.cgi" {
-                return rouille::Response::text(r#"{"SynoToken":""}"#)
-                    .with_unique_header("Content-Type", "application/json; charset=utf-8")
-                    .with_status_code(200);
-            }
-            rouille::Response::empty_404()
+            rouille::router!(request,
+                (GET) ["/webman/login.cgi"] => {
+                    let mut  json = HashMap::new();
+                    json.insert("SynoToken", "");
+                    rouille::Response::json(&json)
+                    .with_additional_header("Content-Type", "application/json; charset=utf-8")
+                    .with_status_code(200)
+                 },
+                (GET) ["/"] => {
+                    rouille::Response::redirect_307("/webman/3rdparty/pan-xunlei-com/index.cgi/")
+                },
+                (GET) ["/webman/"] => {
+                    rouille::Response::redirect_307("/webman/3rdparty/pan-xunlei-com/index.cgi/")
+                },
+                (GET) ["/webman/3rdparty/pan-xunlei-com"] => {
+                    rouille::Response::redirect_307("/webman/3rdparty/pan-xunlei-com/index.cgi/")
+                 },
+                _ => {
+                    let mut cmd = std::process::Command::new(standard::SYNOPKG_CLI_WEB);
+                    // cmd.current_dir(standard::SYNOPKG_PKGDEST);
+
+                    cmd.envs(&envs)
+                    .env("SERVER_SOFTWARE", "rust")
+                    .env("SERVER_PROTOCOL", "HTTP/1.1")
+                    .env("HTTP_HOST", &request.remote_addr().to_string())
+                    .env("GATEWAY_INTERFACE", "CGI/1.1")
+                    .env("REQUEST_METHOD", request.method())
+                    .env("QUERY_STRING", &request.raw_query_string())
+                    .env("REQUEST_URI", &request.raw_url())
+                    .env("PATH_INFO", &request.url())
+                    .env("SCRIPT_NAME", ".")
+                    .env("SCRIPT_FILENAME", &request.url())
+                    .env("SERVER_PORT", port.to_string())
+                    .env("REMOTE_ADDR", request.remote_addr().to_string())
+                    .env("SERVER_NAME", request.remote_addr().to_string())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::inherit())
+                    .stdin(Stdio::piped());
+
+                    for ele in request.headers() {
+                        let k = ele.0.to_uppercase();
+                        let v = ele.1;
+                        if k == "PROXY" {
+                            continue
+                        }
+                        if v.is_empty().not() {
+                            cmd.env(format!("HTTP_{}", k), v);
+                        }
+                    }
+
+                    if request.header("Content-Type").unwrap_or_default().is_empty().not() {
+                        cmd.env(
+                            "CONTENT_TYPE",
+                            &request.header("Content-Type").unwrap(),
+                        );
+                    }
+
+                    if request.header("content-type").unwrap_or_default().is_empty().not() {
+                        cmd.env(
+                            "CONTENT_TYPE",
+                            &request.header("content-type").unwrap(),
+                        );
+                    }
+
+                    if request.header("Content-Length").unwrap_or_default().is_empty().not() {
+                        cmd.env(
+                            "CONTENT_LENGTH",
+                            &request.header("Content-Length").unwrap(),
+                        );
+                    }
+
+                    let mut child = cmd.spawn().unwrap();
+
+                    if let Some(mut body) = request.data() {
+                        std::io::copy(&mut body, child.stdin.as_mut().unwrap()).unwrap();
+                    }
+
+                    let response = {
+                        let mut stdout = std::io::BufReader::new(child.stdout.unwrap());
+
+                        let mut headers = Vec::new();
+                        let mut status_code = 200;
+                        for header in std::io::BufRead::lines(stdout.by_ref()) {
+                            let header = header.unwrap();
+                            if header.is_empty() {
+                                break;
+                            }
+
+                            let (header, val) = header.split_once(':').unwrap();
+                            let val = &val[1..];
+
+                            if header == "Status" {
+                                status_code = val[0..3]
+                                    .parse()
+                                    .expect("Status returned by CGI program is invalid");
+                            } else {
+                                headers.push((header.to_owned().into(), val.to_owned().into()));
+                            }
+                        }
+                        rouille::Response {
+                            status_code,
+                            headers,
+                            data: rouille::ResponseBody::from_reader(stdout),
+                            upgrade: None,
+                        }
+                    };
+
+                    response
+                }
+            )
         });
     }
 
-    fn envs(&self) -> HashMap<String, String> {
+    pub fn envs(&self) -> HashMap<String, String> {
         let mut envs = HashMap::new();
         envs.insert(
             String::from("DriveListen"),
@@ -179,10 +275,11 @@ impl Running for XunleiDaemon {
             .expect("Failed to start ui thread");
 
         // waiting... child thread exit
+        ui_thread.join().expect("Failed to join ui_thread");
         backend_thread
             .join()
             .expect("Failed to join backend_thread");
-        ui_thread.join().expect("Failed to join ui_thread");
+
         Ok(())
     }
 }

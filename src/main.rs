@@ -63,6 +63,7 @@ fn main() -> anyhow::Result<()> {
             daemon::XunleiDaemon::new(path)?.execute()?;
         }
     }
+
     Ok(())
 }
 
@@ -83,6 +84,7 @@ fn init_log(debug: bool) {
             )
         })
         .init();
+        
 }
 
 pub trait Running {
