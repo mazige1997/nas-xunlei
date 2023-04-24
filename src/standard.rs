@@ -7,13 +7,10 @@ use std::{
 
 use anyhow::Context;
 
-pub const TMP_DOWNLOAD_PATH: &str = "/tmp/downloads";
-
 pub const APP_NAME: &str = "xunlei";
 pub const SYSTEMCTL_UNIT_FILE: &str = "/etc/systemd/system/xunlei.service";
 pub const SYNO_AUTHENTICATE_PATH: &str = "/usr/syno/synoman/webman/modules/authenticate.cgi";
 pub const SYNO_INFO_PATH: &str = "/etc/synoinfo.conf";
-
 pub const SYNOPKG_DSM_VERSION_MAJOR: &str = "7";
 pub const SYNOPKG_DSM_VERSION_MINOR: &str = "0";
 pub const SYNOPKG_DSM_VERSION_BUILD: &str = "1";
@@ -23,28 +20,23 @@ pub const SYNOPKG_PKGDEST: &str = "/var/packages/pan-xunlei-com/target";
 pub const SYNOPKG_VAR: &str = "/var/packages/pan-xunlei-com/target/var/";
 pub const SYNOPKG_HOST: &str = "/var/packages/pan-xunlei-com/target/host";
 pub const SYNOPKG_CLI_WEB: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-web";
-
 #[cfg(target_arch = "x86_64")]
 pub const LAUNCHER_EXE: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.amd64";
-
 #[cfg(target_arch = "aarch64")]
 pub const LAUNCHER_EXE: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.arm64";
-
 pub const LAUNCHER_SOCK: &str =
     "unix:///var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.sock";
 pub const SOCK_FILE: &str = "unix:///var/packages/pan-xunlei-com/target/var/pan-xunlei-com.sock";
-
 pub const PID_FILE: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com.pid";
 pub const ENV_FILE: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com.env";
 pub const LOG_FILE: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com.log";
-
 pub const LAUNCH_PID_FILE: &str =
     "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.pid";
 pub const LAUNCH_LOG_FILE: &str =
     "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.log";
 pub const INST_LOG: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com_install.log";
-
 pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi/";
+pub const TMP_DOWNLOAD_PATH: &str = "/tmp/downloads";
 
 pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<()> {
     let filename = std::ffi::OsStr::new(target_path).as_bytes();
