@@ -84,8 +84,7 @@ impl XunleiDaemon {
                  },
                 _ => {
                     let mut cmd = std::process::Command::new(standard::SYNOPKG_CLI_WEB);
-                    // cmd.current_dir(standard::SYNOPKG_PKGDEST);
-
+                    cmd.current_dir(standard::SYNOPKG_PKGDEST);
                     cmd.envs(&envs)
                     .env("SERVER_SOFTWARE", "rust")
                     .env("SERVER_PROTOCOL", "HTTP/1.1")
