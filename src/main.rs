@@ -5,62 +5,58 @@ pub mod xunlei_asset;
 use std::io::Write;
 
 use std::path::PathBuf;
-use structopt::StructOpt;
 
-#[derive(StructOpt, Debug, PartialEq)]
-#[structopt(name = "Xunlei", version = "3.5.2")]
+use clap::{Args, Parser, Subcommand};
+
+#[derive(Parser)]
+#[clap(author, version, about, arg_required_else_help = true)]
 struct Opt {
-    /// Enable debug
-    #[structopt(short, long)]
+    /// Enable debug mode
+    #[clap(short, long, global = true)]
     debug: bool,
 
-    #[structopt(subcommand)]
-    cmd: Cmd,
+    #[clap(subcommand)]
+    commands: Commands,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum Cmd {
+#[derive(Subcommand)]
+pub enum Commands {
     /// Install xunlei
-    Install {
-        /// Xunlei internal mode
-        #[structopt(short, long)]
-        internal: bool,
-        /// Xunlei web-ui port
-        port: Option<u16>,
-        /// Xunlei config directory
-        #[structopt(short, long)]
-        config_path: Option<PathBuf>,
-        /// Xunlei download directory
-        #[structopt(short, long)]
-        download_path: Option<PathBuf>,
-    },
+    Install(Config),
     /// Uninstall xunlei
     Uninstall,
-    /// Execute xunlei daemon
-    Execute {
-        /// Xunlei config directory
-        #[structopt(short, long)]
-        path: Option<PathBuf>,
-    },
+    /// Execute xunlei
+    Execute(Config),
+}
+
+#[derive(Args)]
+pub struct Config {
+    /// Xunlei internal mode
+    #[clap(short, long)]
+    internal: bool,
+    /// Xunlei web-ui port
+    #[clap(short, long, default_value = "5055", value_parser = parser_port_in_range)]
+    port: u16,
+    /// Xunlei config directory
+    #[clap(short, long, default_value = standard::SYNOPKG_PKGBASE)]
+    config_path: PathBuf,
+    /// Xunlei download directory
+    #[clap(short, long, default_value = standard::TMP_DOWNLOAD_PATH)]
+    download_path: PathBuf,
 }
 
 fn main() -> anyhow::Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     init_log(opt.debug);
-    match opt.cmd {
-        Cmd::Install {
-            internal,
-            port,
-            download_path,
-            config_path,
-        } => {
-            service::XunleiInstall::new(internal, port, download_path, config_path)?.execute()?;
+    match opt.commands {
+        Commands::Install(config) => {
+            service::XunleiInstall::from(config).execute()?;
         }
-        Cmd::Uninstall => {
+        Commands::Uninstall => {
             service::XunleiUninstall {}.execute()?;
         }
-        Cmd::Execute { path } => {
-            daemon::XunleiDaemon::new(path)?.execute()?;
+        Commands::Execute(config) => {
+            daemon::XunleiDaemon::from(config).execute()?;
         }
     }
 
@@ -84,7 +80,23 @@ fn init_log(debug: bool) {
             )
         })
         .init();
-        
+}
+
+const PORT_RANGE: std::ops::RangeInclusive<usize> = 1024..=65535;
+
+// port range parser
+pub(crate) fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
+    let port: usize = s
+        .parse()
+        .map_err(|_| anyhow::anyhow!(format!("`{}` isn't a port number", s)))?;
+    if PORT_RANGE.contains(&port) {
+        return Ok(port as u16);
+    }
+    anyhow::bail!(format!(
+        "Port not in range {}-{}",
+        PORT_RANGE.start(),
+        PORT_RANGE.end()
+    ))
 }
 
 pub trait Running {

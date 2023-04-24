@@ -1,6 +1,5 @@
 extern crate libc;
 
-use std::borrow::Cow;
 use std::ops::Not;
 use std::path::Path;
 use std::path::PathBuf;
@@ -10,73 +9,59 @@ use rand::Rng;
 
 use crate::standard;
 use crate::xunlei_asset::XunleiAsset;
+use crate::Config;
 use crate::Running;
 
-#[derive(serde::Serialize)]
 pub struct XunleiInstall {
-    #[serde(skip_serializing)]
     description: &'static str,
     internal: bool,
     port: u16,
     download_path: PathBuf,
-    #[serde(skip_serializing)]
     config_path: PathBuf,
-    #[serde(skip_serializing)]
     uid: u32,
-    #[serde(skip_serializing)]
     gid: u32,
 }
 
-impl XunleiInstall {
-    pub fn new(
-        internal: bool,
-        port: Option<u16>,
-        download_path: Option<PathBuf>,
-        config_path: Option<PathBuf>,
-    ) -> anyhow::Result<impl Running> {
-        let port = port.unwrap_or(5055);
+impl From<Config> for XunleiInstall {
+    fn from(config: Config) -> Self {
         let uid = unsafe { libc::getuid() };
         let gid = unsafe { libc::getgid() };
-        let download_path = download_path.unwrap_or(PathBuf::from(standard::TMP_DOWNLOAD_PATH));
-        let config_path = config_path.unwrap_or(PathBuf::from(standard::SYNOPKG_PKGBASE));
-        Ok(Self {
+        Self {
             description: "Thunder remote download service",
-            port,
-            internal,
+            internal: config.internal,
+            port: config.port,
+            download_path: config.download_path,
+            config_path: config.config_path,
             uid,
             gid,
-            download_path,
-            config_path,
-        })
+        }
     }
+}
 
+impl XunleiInstall {
     fn config(&self) -> anyhow::Result<()> {
         log::info!("[XunleiInstall] Configuration in progress");
         log::info!("[XunleiInstall] WebUI port: {}", self.port);
 
         if self.download_path.is_dir().not() {
             std::fs::create_dir_all(&self.download_path)?;
-            log::info!(
-                "[XunleiInstall] Download directory: {}",
-                self.download_path.display()
-            );
         } else if self.download_path.is_file() {
             return Err(anyhow::anyhow!("Download path must be a directory"));
         }
 
         if self.config_path.is_dir().not() {
             std::fs::create_dir_all(&self.config_path)?;
-            log::info!(
-                "[XunleiInstall] Config directory: {}",
-                self.config_path.display()
-            );
         } else if self.config_path.is_file() {
             return Err(anyhow::anyhow!("Config path must be a directory"));
         }
-
-        let config_file = PathBuf::from(&self.config_path).join(standard::CONFIG_FILE_NAME);
-        let data = serde_json::to_vec(&self).context("Failed serialize config to json")?;
-        standard::write_file(&config_file, Cow::Owned(data), 0o666)?;
+        log::info!(
+            "[XunleiInstall] Config directory: {}",
+            self.config_path.display()
+        );
+        log::info!(
+            "[XunleiInstall] Download directory: {}",
+            self.download_path.display()
+        );
         log::info!("[XunleiInstall] Configuration completed");
         Ok(())
     }
@@ -157,7 +142,7 @@ impl XunleiInstall {
         ));
         standard::create_dir_all(
             &syno_authenticate_path.parent().context(format!(
-                "the path: {} not exists",
+                "directory path: {} not exists",
                 syno_authenticate_path.display()
             ))?,
             0o755,
@@ -210,6 +195,7 @@ impl XunleiInstall {
     }
 
     fn systemctl(&self) -> anyhow::Result<()> {
+        let internal = if self.internal { "-i" } else { "" };
         let systemctl_unit = format!(
             r#"[Unit]
                 Description={}
@@ -218,7 +204,7 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart=/var/packages/pan-xunlei-com/xunlei execute -p {}
+                ExecStart=/var/packages/pan-xunlei-com/xunlei execute {} -p {} -d {} -c {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
@@ -226,6 +212,9 @@ impl XunleiInstall {
                 [Install]
                 WantedBy=multi-user.target"#,
             self.description,
+            internal,
+            self.port,
+            self.download_path.display(),
             self.config_path.display(),
             self.uid
         );

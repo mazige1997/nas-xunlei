@@ -10,7 +10,6 @@ use anyhow::Context;
 pub const TMP_DOWNLOAD_PATH: &str = "/tmp/downloads";
 
 pub const APP_NAME: &str = "xunlei";
-pub const CONFIG_FILE_NAME: &str = "config.json";
 pub const SYSTEMCTL_UNIT_FILE: &str = "/etc/systemd/system/xunlei.service";
 pub const SYNO_AUTHENTICATE_PATH: &str = "/usr/syno/synoman/webman/modules/authenticate.cgi";
 pub const SYNO_INFO_PATH: &str = "/etc/synoinfo.conf";
@@ -45,7 +44,7 @@ pub const LAUNCH_LOG_FILE: &str =
     "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.log";
 pub const INST_LOG: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com_install.log";
 
-pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi";
+pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi/";
 
 pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<()> {
     let filename = std::ffi::OsStr::new(target_path).as_bytes();

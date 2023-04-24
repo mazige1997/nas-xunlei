@@ -1,5 +1,4 @@
-use crate::{standard, Running};
-use anyhow::Context;
+use crate::{standard, Config, Running};
 use std::{
     collections::HashMap,
     io::Read,
@@ -8,37 +7,25 @@ use std::{
     process::Stdio,
 };
 
-#[derive(Debug, serde::Deserialize)]
 pub struct XunleiDaemon {
-    port: u16,
     internal: bool,
+    port: u16,
     download_path: PathBuf,
-    #[serde(skip_serializing)]
-    config_path: Option<PathBuf>,
+    config_path: PathBuf,
+}
+
+impl From<Config> for XunleiDaemon {
+    fn from(config: Config) -> Self {
+        Self {
+            internal: config.internal,
+            port: config.port,
+            download_path: config.download_path,
+            config_path: config.config_path,
+        }
+    }
 }
 
 impl XunleiDaemon {
-    pub fn new(config_path: Option<PathBuf>) -> anyhow::Result<XunleiDaemon> {
-        let config_path: PathBuf = config_path.unwrap_or(PathBuf::from(standard::SYNOPKG_PKGBASE));
-        let mut config_file = std::fs::File::open(config_path.join(standard::CONFIG_FILE_NAME))?;
-        let mut content = String::new();
-        config_file.read_to_string(&mut content)?;
-        match serde_json::from_str::<XunleiDaemon>(&content)
-            .context("Failed deserialize to config.json")
-        {
-            Ok(mut daemon) => {
-                daemon.config_path = Some(config_path);
-                Ok(daemon)
-            }
-            Err(_) => Ok(XunleiDaemon {
-                port: 5055,
-                internal: false,
-                download_path: PathBuf::from(standard::TMP_DOWNLOAD_PATH),
-                config_path: Some(config_path),
-            }),
-        }
-    }
-
     fn run_backend(envs: HashMap<String, String>) -> anyhow::Result<std::process::Child> {
         log::info!("[XunleiDaemon] Start Xunlei Engine");
         standard::create_dir_all(&Path::new(standard::SYNOPKG_VAR), 0o755)?;
@@ -67,20 +54,18 @@ impl XunleiDaemon {
         rouille::start_server(format!("{}:{}", address, port), move |request| {
             rouille::router!(request,
                 (GET) ["/webman/login.cgi"] => {
-                    let mut  json = HashMap::new();
-                    json.insert("SynoToken", "");
-                    rouille::Response::json(&json)
+                    rouille::Response::json(&String::from(r#"{"SynoToken", ""}"#))
                     .with_additional_header("Content-Type", "application/json; charset=utf-8")
                     .with_status_code(200)
                  },
                 (GET) ["/"] => {
-                    rouille::Response::redirect_307("/webman/3rdparty/pan-xunlei-com/index.cgi/")
+                    rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME)
                 },
                 (GET) ["/webman/"] => {
-                    rouille::Response::redirect_307("/webman/3rdparty/pan-xunlei-com/index.cgi/")
+                    rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME)
                 },
                 (GET) ["/webman/3rdparty/pan-xunlei-com"] => {
-                    rouille::Response::redirect_307("/webman/3rdparty/pan-xunlei-com/index.cgi/")
+                    rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME)
                  },
                 _ => {
                     let mut cmd = std::process::Command::new(standard::SYNOPKG_CLI_WEB);
@@ -177,7 +162,7 @@ impl XunleiDaemon {
         });
     }
 
-    pub fn envs(&self) -> HashMap<String, String> {
+    fn envs(&self) -> HashMap<String, String> {
         let mut envs = HashMap::new();
         envs.insert(
             String::from("DriveListen"),
@@ -192,13 +177,10 @@ impl XunleiDaemon {
                 standard::SYNOPKG_DSM_VERSION_BUILD
             ),
         );
-        envs.insert(
-            String::from("HOME"),
-            self.config_path.clone().unwrap().display().to_string(),
-        );
+        envs.insert(String::from("HOME"), self.config_path.display().to_string());
         envs.insert(
             String::from("ConfigPath"),
-            self.config_path.clone().unwrap().display().to_string(),
+            self.config_path.display().to_string(),
         );
         envs.insert(
             String::from("DownloadPATH"),
