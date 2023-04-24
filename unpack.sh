@@ -12,6 +12,7 @@ tar --wildcards -Oxf $(find . -type f -name \*-${arch}.spk | head -n1) package.t
 mv ${dir}/bin/bin/* ${dir}/
 mv ./ui/index.cgi ./xunlei-pan-cli-web
 rm -rf ${dir}/bin/bin
+rm -rf ./bin
 rm -rf ${dir}/ui
 rm -f ./version_code ./*.spk
 popd
