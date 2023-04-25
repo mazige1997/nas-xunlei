@@ -1,5 +1,5 @@
 pub mod daemon;
-pub mod service;
+pub mod systemd;
 pub mod standard;
 pub mod xunlei_asset;
 use std::io::Write;
@@ -50,10 +50,10 @@ fn main() -> anyhow::Result<()> {
     init_log(opt.debug);
     match opt.commands {
         Commands::Install(config) => {
-            service::XunleiInstall::from(config).execute()?;
+            systemd::XunleiInstall::from(config).execute()?;
         }
         Commands::Uninstall => {
-            service::XunleiUninstall {}.execute()?;
+            systemd::XunleiUninstall {}.execute()?;
         }
         Commands::Execute(config) => {
             daemon::XunleiDaemon::from(config).execute()?;
