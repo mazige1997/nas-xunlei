@@ -204,7 +204,7 @@ impl XunleiInstall {
     }
 
     fn systemd(&self) -> anyhow::Result<()> {
-        if support().not() {
+        if Systemd::support().not() {
             return Ok(());
         }
         let internal = if self.internal { "-i" } else { "" };
