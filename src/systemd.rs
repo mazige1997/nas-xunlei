@@ -203,7 +203,15 @@ impl XunleiInstall {
         Ok(())
     }
 
-    fn systemctl(&self) -> anyhow::Result<()> {
+    fn initialize_systemd_service(&self) -> anyhow::Result<()> {
+        let child = std::process::Command::new("systemctl")
+            .arg("--help")
+            .output()
+            .unwrap();
+        if child.status.success().not() {
+            log::warn!("[XunleiInstall] Your system does not support systemctl");
+            return Ok(());
+        }
         let internal = if self.internal { "-i" } else { "" };
         let systemctl_unit = format!(
             r#"[Unit]
@@ -245,7 +253,7 @@ impl Running for XunleiInstall {
     fn execute(&self) -> anyhow::Result<()> {
         self.config()?;
         self.extract()?;
-        self.systemctl()
+        self.initialize_systemd_service()
     }
 }
 
