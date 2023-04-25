@@ -306,7 +306,7 @@ impl Systemd {
             Err(_) => false,
         };
         if support.not() {
-            log::warn!("[XunleiInstall] Your system does not support systemctl");
+            log::warn!("[Systemd] Your system does not support systemctl");
         }
         support
     }
