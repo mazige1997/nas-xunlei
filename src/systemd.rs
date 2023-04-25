@@ -206,8 +206,7 @@ impl XunleiInstall {
     fn initialize_systemd_service(&self) -> anyhow::Result<()> {
         let child = std::process::Command::new("systemctl")
             .arg("--help")
-            .output()
-            .unwrap();
+            .output()?;
         if child.status.success().not() {
             log::warn!("[XunleiInstall] Your system does not support systemctl");
             return Ok(());
