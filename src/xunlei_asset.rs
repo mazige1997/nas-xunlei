@@ -45,15 +45,15 @@ impl Xunlei for XunleiEmbedAsset {
 
 #[cfg(not(feature = "embed"))]
 struct XunleiLocalAsset {
-    tmp: PathBuf,
+    tmp_path: PathBuf,
     filename: String,
 }
 
 #[cfg(not(feature = "embed"))]
 impl XunleiLocalAsset {
-    pub fn new() -> anyhow::Result<Self> {
+    fn new() -> anyhow::Result<Self> {
         let xunlei = XunleiLocalAsset {
-            tmp: PathBuf::from("/tmp/xunlei_bin"),
+            tmp_path: PathBuf::from("/tmp/xunlei_bin"),
             filename: format!("nasxunlei-DSM7-{}.spk", standard::SUPPORT_ARCH),
         };
         let status = xunlei.exestrct_package()?;
@@ -67,25 +67,20 @@ impl XunleiLocalAsset {
         let response =
             ureq::get(&format!("http://down.sandai.net/nas/{}", self.filename)).call()?;
 
-        let total_size = response
-            .header("Content-Length")
-            .unwrap()
-            .parse::<u64>()
-            .unwrap();
+        let total_size = response.header("Content-Length").unwrap().parse::<u64>()?;
 
         let pb = indicatif::ProgressBar::new(total_size);
-        pb.set_style(indicatif::ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
-                .unwrap()
-                .progress_chars("#>-"));
+        pb.set_style(indicatif::ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")?
+            .progress_chars("#>-"));
 
-        if self.tmp.exists().not() {
-            standard::create_dir_all(&self.tmp, 0o755)?;
+        if self.tmp_path.exists().not() {
+            standard::create_dir_all(&self.tmp_path, 0o755)?;
         }
 
         let mut downloaded = 0;
         let mut buf = [0; 1024];
         let mut reader = response.into_reader();
-        let mut output_file = std::fs::File::create(self.tmp.join(self.filename.as_str()))?;
+        let mut output_file = std::fs::File::create(self.tmp_path.join(self.filename.as_str()))?;
         loop {
             let n = reader.read(buf.as_mut())?;
             if n == 0 {
@@ -102,7 +97,7 @@ impl XunleiLocalAsset {
         output_file.flush()?;
         drop(output_file);
 
-        let dir = self.tmp.display();
+        let dir = self.tmp_path.display();
         let filename = self.filename.as_str();
         Ok(std::process::Command::new("sh")
                 .arg("-c")
@@ -124,17 +119,17 @@ impl XunleiLocalAsset {
 impl Xunlei for XunleiLocalAsset {
     fn version(&self) -> anyhow::Result<String> {
         Ok(std::fs::read_to_string(
-            PathBuf::from(&self.tmp).join("version"),
+            PathBuf::from(&self.tmp_path).join("version"),
         )?)
     }
 
     fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>> {
-        let vec = std::fs::read(PathBuf::from(&self.tmp).join(filename))?;
+        let vec = std::fs::read(PathBuf::from(&self.tmp_path).join(filename))?;
         Ok(std::borrow::Cow::from(vec))
     }
 
     fn iter(&self) -> anyhow::Result<Vec<String>> {
-        let entries = std::fs::read_dir(&self.tmp)?;
+        let entries = std::fs::read_dir(&self.tmp_path)?;
         let mut file_names = Vec::new();
         for entry in entries {
             if let Ok(entry) = entry {
