@@ -1,6 +1,6 @@
 pub mod daemon;
-pub mod systemd;
 pub mod standard;
+pub mod systemd;
 pub mod xunlei_asset;
 use std::io::Write;
 

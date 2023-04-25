@@ -3,7 +3,6 @@ use std::io::copy;
 use std::io::Result;
 use std::net::TcpStream;
 
-const URL: &str = "http://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk";
 const OUTPUT_FILE: &str = "nasxunlei-DSM7-x86_64.spk";
 
 fn main() -> Result<()> {

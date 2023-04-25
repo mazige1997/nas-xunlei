@@ -42,7 +42,6 @@ impl Xunlei for XunleiAsset {
 pub struct XunleiLocalAsset(PathBuf);
 
 impl XunleiLocalAsset {
-
     pub fn new() -> Self {
         Self(PathBuf::from(standard::TMP_DOWNLOAD_PATH))
     }
@@ -56,7 +55,7 @@ impl XunleiLocalAsset {
             anyhow::bail!("Unsupported CPU architecture")
         };
         let url = format!("http://down.sandai.net/nas/nasxunlei-DSM7-{}.spk", arch);
-    
+
         let request = format!(
             "GET {} HTTP/1.1\r\n\
              Host: down.sandai.net\r\n\
@@ -64,17 +63,15 @@ impl XunleiLocalAsset {
              \r\n",
             url
         );
-    
+
         let mut stream = TcpStream::connect("down.sandai.net:80")?;
         std::io::Write::write(&mut stream, request.as_bytes())?;
-    
+
         Ok(stream)
     }
-    
 }
 
 impl Xunlei for XunleiLocalAsset {
-    
     fn version() -> anyhow::Result<String> {
         todo!()
     }
