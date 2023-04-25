@@ -1,13 +1,7 @@
 use core::str;
 use std::{borrow::Cow, io::Write, ops::Not, path::PathBuf};
 
-use anyhow::Context;
-
 use crate::standard;
-
-#[derive(rust_embed::RustEmbed)]
-#[folder = "xunlei/"]
-struct Asset;
 
 pub trait Xunlei {
     fn version(&self) -> anyhow::Result<String>;
@@ -17,9 +11,19 @@ pub trait Xunlei {
     fn iter(&self) -> anyhow::Result<Vec<String>>;
 }
 
-pub struct XunleiAsset;
+#[cfg(feature = "embed")]
+#[derive(rust_embed::RustEmbed)]
+#[folder = "xunlei/"]
+struct Asset;
 
-impl Xunlei for XunleiAsset {
+#[cfg(feature = "embed")]
+use anyhow::Context;
+
+#[cfg(feature = "embed")]
+struct XunleiEmbedAsset;
+
+#[cfg(feature = "embed")]
+impl Xunlei for XunleiEmbedAsset {
     fn version(&self) -> anyhow::Result<String> {
         let version_bin = Asset::get("version").context("Failed to get version asset")?;
         let version = std::str::from_utf8(version_bin.data.as_ref())
@@ -39,30 +43,24 @@ impl Xunlei for XunleiAsset {
     }
 }
 
-pub struct XunleiLocalAsset {
+#[cfg(not(feature = "embed"))]
+struct XunleiLocalAsset {
     tmp: PathBuf,
     filename: String,
 }
 
+#[cfg(not(feature = "embed"))]
 impl XunleiLocalAsset {
-    pub fn new() -> Self {
-        let xunlei = Self {
+    pub fn new() -> anyhow::Result<Self> {
+        let xunlei = XunleiLocalAsset {
             tmp: PathBuf::from("/tmp/xunlei_bin"),
             filename: format!("nasxunlei-DSM7-{}.spk", standard::SUPPORT_ARCH),
         };
-        match xunlei.exestrct_package() {
-            Ok(status) => {
-                if status.success().not() {
-                    log::error!(
-                        "[XunleiLocalAsset] There was an error extracting the download package"
-                    )
-                }
-            }
-            Err(e) => {
-                panic!("{}", e)
-            }
+        let status = xunlei.exestrct_package()?;
+        if status.success().not() {
+            log::error!("[XunleiLocalAsset] There was an error extracting the download package")
         }
-        xunlei
+        Ok(xunlei)
     }
 
     fn exestrct_package(&self) -> anyhow::Result<std::process::ExitStatus> {
@@ -121,6 +119,7 @@ impl XunleiLocalAsset {
     }
 }
 
+#[cfg(not(feature = "embed"))]
 impl Xunlei for XunleiLocalAsset {
     fn version(&self) -> anyhow::Result<String> {
         Ok(std::fs::read_to_string(
@@ -146,4 +145,12 @@ impl Xunlei for XunleiLocalAsset {
         }
         Ok(file_names)
     }
+}
+
+pub fn asset() -> anyhow::Result<impl Xunlei> {
+    #[cfg(not(feature = "embed"))]
+    let asset = XunleiLocalAsset::new()?;
+    #[cfg(feature = "embed")]
+    let asset = XunleiEmbedAsset {};
+    Ok(asset)
 }

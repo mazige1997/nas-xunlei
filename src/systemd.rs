@@ -8,10 +8,10 @@ use anyhow::{Context, Ok};
 use rand::Rng;
 
 use crate::standard;
-use crate::xunlei_asset::Xunlei;
-use crate::xunlei_asset::XunleiAsset;
 use crate::Config;
 use crate::Running;
+use crate::xunlei_asset;
+use crate::xunlei_asset::Xunlei;
 
 pub struct XunleiInstall {
     description: &'static str,
@@ -79,7 +79,7 @@ impl XunleiInstall {
 
         standard::create_dir_all(&target_dir, 0o755)?;
 
-        let xunlei = XunleiAsset {};
+        let xunlei = xunlei_asset::asset()?;
         for file in xunlei.iter()? {
             let filename = file.as_str();
             let target_filepath = target_dir.join(filename);
