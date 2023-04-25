@@ -4,7 +4,7 @@ use std::ops::Not;
 use std::path::Path;
 use std::path::PathBuf;
 
-use anyhow::{Context, Ok};
+use anyhow::Context;
 use rand::Rng;
 
 use crate::standard;
@@ -203,12 +203,8 @@ impl XunleiInstall {
         Ok(())
     }
 
-    fn initialize_systemd_service(&self) -> anyhow::Result<()> {
-        let child = std::process::Command::new("systemctl")
-            .arg("--help")
-            .output()?;
-        if child.status.success().not() {
-            log::warn!("[XunleiInstall] Your system does not support systemctl");
+    fn systemd(&self) -> anyhow::Result<()> {
+        if support().not() {
             return Ok(());
         }
         let internal = if self.internal { "-i" } else { "" };
@@ -252,14 +248,14 @@ impl Running for XunleiInstall {
     fn execute(&self) -> anyhow::Result<()> {
         self.config()?;
         self.extract()?;
-        self.initialize_systemd_service()
+        self.systemd()
     }
 }
 
 pub struct XunleiUninstall;
 
 impl XunleiUninstall {
-    pub fn remove_service_file(&self) -> anyhow::Result<()> {
+    fn remove_service_file(&self) -> anyhow::Result<()> {
         let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
         if path.exists() {
             std::fs::remove_file(path)?;
@@ -268,7 +264,7 @@ impl XunleiUninstall {
         Ok(())
     }
 
-    pub fn remove_package(&self) -> anyhow::Result<()> {
+    fn remove_package(&self) -> anyhow::Result<()> {
         let path = PathBuf::from(standard::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
@@ -281,12 +277,31 @@ impl XunleiUninstall {
 
 impl Running for XunleiUninstall {
     fn execute(&self) -> anyhow::Result<()> {
-        systemctl(["disable", standard::APP_NAME])?;
-        systemctl(["stop", standard::APP_NAME])?;
-        self.remove_service_file()?;
-        self.remove_package()?;
-        systemctl(["daemon-reload"])?;
+        if support() {
+            systemctl(["disable", standard::APP_NAME])?;
+            systemctl(["stop", standard::APP_NAME])?;
+            self.remove_service_file()?;
+            self.remove_package()?;
+            systemctl(["daemon-reload"])?;
+        }
         Ok(())
+    }
+}
+
+fn support() -> bool {
+    let child_res = std::process::Command::new("systemctl")
+        .arg("--help")
+        .output();
+
+    match child_res {
+        Ok(output) => {
+            if output.status.success() {
+                return true;
+            }
+            log::warn!("[XunleiInstall] Your system does not support systemctl");
+            false
+        }
+        Err(_) => false,
     }
 }
 
@@ -298,8 +313,7 @@ where
     let output = std::process::Command::new("systemctl")
         .args(args)
         .output()?;
-    let status = output.status;
-    if status.success().not() {
+    if output.status.success().not() {
         log::error!(
             "[systemctl] {}",
             String::from_utf8_lossy(&output.stderr).trim()
