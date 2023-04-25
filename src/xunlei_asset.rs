@@ -89,7 +89,7 @@ impl XunleiLocalAsset {
         loop {
             let n = reader.read(buf.as_mut())?;
             if n == 0 {
-                print!("\n");
+               
                 break;
             }
             output_file.write_all(&buf[..n])?;
@@ -98,7 +98,8 @@ impl XunleiLocalAsset {
             pb.set_position(new);
         }
         pb.finish_with_message("downloaded");
-
+        print!("\n");
+        
         output_file.flush()?;
         drop(output_file);
 
