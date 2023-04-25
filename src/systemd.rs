@@ -159,7 +159,7 @@ impl XunleiInstall {
 
         // symlink
         unsafe {
-            if !Path::new(standard::SYNO_INFO_PATH).exists() {
+            if Path::new(standard::SYNO_INFO_PATH).exists().not() {
                 let source_sys_info_path =
                     std::ffi::CString::new(syno_info_path.display().to_string())?;
                 let target_sys_info_path = std::ffi::CString::new(standard::SYNO_INFO_PATH)?;
@@ -169,12 +169,17 @@ impl XunleiInstall {
                 }
             }
 
-            if !Path::new(standard::SYNO_AUTHENTICATE_PATH).exists() {
+            let link_syno_authenticate_path = Path::new(standard::SYNO_AUTHENTICATE_PATH);
+            if link_syno_authenticate_path.exists().not() {
                 let source_syno_authenticate_path =
                     std::ffi::CString::new(syno_authenticate_path.display().to_string())?;
                 let target_syno_authenticate_path =
                     std::ffi::CString::new(standard::SYNO_AUTHENTICATE_PATH)?;
-
+                let patent_ = link_syno_authenticate_path.parent().context(format!(
+                    "directory path: {} not exists",
+                    link_syno_authenticate_path.display()
+                ))?;
+                standard::create_dir_all(patent_, 0o755)?;
                 if libc::symlink(
                     source_syno_authenticate_path.as_ptr(),
                     target_syno_authenticate_path.as_ptr(),
