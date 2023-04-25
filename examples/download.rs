@@ -3,7 +3,7 @@ use std::io::Read;
 use std::io::Result;
 use std::io::Write;
 
-const OUTPUT_FILE: &str = ;
+const OUTPUT_FILE: &str = "/tmp/xunlei_bin/nasxunlei-DSM7-x86_64.spk";
 
 fn main() -> Result<()> {
     let response = ureq::get("http://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk")
