@@ -8,6 +8,7 @@ use anyhow::{Context, Ok};
 use rand::Rng;
 
 use crate::standard;
+use crate::xunlei_asset::Xunlei;
 use crate::xunlei_asset::XunleiAsset;
 use crate::Config;
 use crate::Running;
@@ -78,10 +79,11 @@ impl XunleiInstall {
 
         standard::create_dir_all(&target_dir, 0o755)?;
 
-        for file in XunleiAsset::iter() {
-            let filename = file.as_ref();
+        let xunlei = XunleiAsset {};
+        for file in xunlei.iter()? {
+            let filename = file.as_str();
             let target_filepath = target_dir.join(filename);
-            let data = XunleiAsset::get(filename).context("Read data failure")?;
+            let data = xunlei.get(filename).context("Read data failure")?;
             standard::write_file(&target_filepath, data, 0o755)?;
             log::info!("[XunleiInstall] Install to: {}", target_filepath.display());
         }

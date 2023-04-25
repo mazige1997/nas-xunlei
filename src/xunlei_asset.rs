@@ -1,5 +1,5 @@
 use core::str;
-use std::{borrow::Cow, net::TcpStream, path::PathBuf};
+use std::{borrow::Cow, io::Write, ops::Not, path::PathBuf};
 
 use anyhow::Context;
 
@@ -10,77 +10,115 @@ use crate::standard;
 struct Asset;
 
 pub trait Xunlei {
-    fn version() -> anyhow::Result<String>;
+    fn version(&self) -> anyhow::Result<String>;
 
-    fn get(filename: &str) -> anyhow::Result<Cow<[u8]>>;
+    fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>>;
 
-    fn iter() -> Vec<String>;
+    fn iter(&self) -> anyhow::Result<Vec<String>>;
 }
 
 pub struct XunleiAsset;
 
 impl Xunlei for XunleiAsset {
-    fn version() -> anyhow::Result<String> {
+    fn version(&self) -> anyhow::Result<String> {
         let version_bin = Asset::get("version").context("Failed to get version asset")?;
         let version = std::str::from_utf8(version_bin.data.as_ref())
             .context("Error getting version number!")?;
         Ok(String::from(version))
     }
 
-    fn get(filename: &str) -> anyhow::Result<Cow<[u8]>> {
+    fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>> {
         let bin = Asset::get(filename).context("Failed to get bin asset")?;
         Ok(bin.data)
     }
 
-    fn iter() -> Vec<String> {
-        Asset::iter()
+    fn iter(&self) -> anyhow::Result<Vec<String>> {
+        Ok(Asset::iter()
             .map(|v| v.into_owned())
-            .collect::<Vec<String>>()
+            .collect::<Vec<String>>())
     }
 }
 
-pub struct XunleiLocalAsset(PathBuf);
+pub struct XunleiLocalAsset {
+    tmp: PathBuf,
+    filename: String,
+}
 
 impl XunleiLocalAsset {
     pub fn new() -> Self {
-        Self(PathBuf::from(standard::TMP_DOWNLOAD_PATH))
+        let xunlei = Self {
+            tmp: PathBuf::from("/tmp/xunlei_bin"),
+            filename: format!("nasxunlei-DSM7-{}.spk", standard::SUPPORT_ARCH),
+        };
+        match xunlei.exestrct_package() {
+            Ok(status) => {
+                if status.success().not() {
+                    log::error!(
+                        "[XunleiLocalAsset] There was an error extracting the download package"
+                    )
+                }
+            }
+            Err(e) => {
+                panic!("{}", e)
+            }
+        }
+        xunlei
     }
 
-    fn download_package() -> anyhow::Result<TcpStream> {
-        let arch = if std::env::consts::ARCH == "x86_64" {
-            "x86_64"
-        } else if std::env::consts::ARCH == "aarch64" {
-            "armv8"
-        } else {
-            anyhow::bail!("Unsupported CPU architecture")
-        };
-        let url = format!("http://down.sandai.net/nas/nasxunlei-DSM7-{}.spk", arch);
+    fn exestrct_package(&self) -> anyhow::Result<std::process::ExitStatus> {
+        let mut response = ureq::get(&format!("http://down.sandai.net/nas/{}", self.filename))
+            .call()?
+            .into_reader();
+        if self.tmp.exists().not() {
+            standard::create_dir_all(&self.tmp, 0o755)?;
+        }
+        let file_path = self.tmp.join(self.filename.as_str());
+        let mut output_file = std::fs::File::create(&file_path)?;
+        std::io::copy(&mut response, &mut output_file)?;
+        output_file.flush()?;
+        drop(output_file);
 
-        let request = format!(
-            "GET {} HTTP/1.1\r\n\
-             Host: down.sandai.net\r\n\
-             Connection: close\r\n\
-             \r\n",
-            url
-        );
-
-        let mut stream = TcpStream::connect("down.sandai.net:80")?;
-        std::io::Write::write(&mut stream, request.as_bytes())?;
-
-        Ok(stream)
+        let dir = self.tmp.display();
+        let filename = self.filename.as_str();
+        Ok(std::process::Command::new("sh")
+                .arg("-c")
+                .arg(format!("tar --wildcards -Oxf $(find {dir} -type f -name {filename} | head -n1) package.tgz | tar --wildcards -xJC {dir} 'bin/bin/*' 'ui/index.cgi' &&
+                    mv {dir}/bin/bin/* {dir}/ &&
+                    mv {dir}/ui/index.cgi {dir}/xunlei-pan-cli-web &&
+                    rm -rf {dir}/bin/bin &&
+                    rm -rf {dir}/bin &&
+                    rm -rf {dir}/ui &&
+                    rm -f {dir}/version_code {dir}/{filename}
+                "))
+                .spawn()?
+                .wait()?
+            )
     }
 }
 
 impl Xunlei for XunleiLocalAsset {
-    fn version() -> anyhow::Result<String> {
-        todo!()
+    fn version(&self) -> anyhow::Result<String> {
+        Ok(std::fs::read_to_string(
+            PathBuf::from(&self.tmp).join("version"),
+        )?)
     }
 
-    fn get(filename: &str) -> anyhow::Result<Cow<[u8]>> {
-        todo!()
+    fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>> {
+        let vec = std::fs::read(PathBuf::from(&self.tmp).join(filename))?;
+        Ok(std::borrow::Cow::from(vec))
     }
 
-    fn iter() -> Vec<String> {
-        todo!()
+    fn iter(&self) -> anyhow::Result<Vec<String>> {
+        let entries = std::fs::read_dir(&self.tmp)?;
+        let mut file_names = Vec::new();
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if let Some(file_name) = path.file_name() {
+                    file_names.push(file_name.to_string_lossy().to_string());
+                }
+            }
+        }
+        Ok(file_names)
     }
 }

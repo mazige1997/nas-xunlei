@@ -1,32 +1,37 @@
 use std::fs::File;
 use std::io::copy;
 use std::io::Result;
-use std::net::TcpStream;
+use std::io::Write;
 
-const OUTPUT_FILE: &str = "nasxunlei-DSM7-x86_64.spk";
+const OUTPUT_FILE: &str = "/tmp/xunlei_bin/nasxunlei-DSM7-x86_64.spk";
 
 fn main() -> Result<()> {
-    let mut response = get_http_response()?;
+    // let mut response = ureq::get("http://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk")
+    //     .call()
+    //     .unwrap()
+    //     .into_reader();
 
-    let mut output_file = File::create(OUTPUT_FILE)?;
+    // let mut output_file = File::create(OUTPUT_FILE)?;
 
-    copy(&mut response, &mut output_file)?;
+    // copy(&mut response, &mut output_file)?;
+
+    // output_file.flush()?;
+    // drop(output_file);
+    let filename = "nasxunlei-DSM7-x86_64.spk";
+    let dir = "/tmp/xunlei_bin";
+    std::process::Command::new("sh")
+    .arg("-c")
+    .arg(format!("
+                tar --wildcards -Oxf $(find {dir} -type f -name {filename} | head -n1) package.tgz | tar --wildcards -xJC {dir} 'bin/bin/*' 'ui/index.cgi' &&
+                mv {dir}/bin/bin/* {dir}/ &&
+                mv {dir}/ui/index.cgi {dir}/xunlei-pan-cli-web &&
+                rm -rf {dir}/bin/bin &&
+                rm -rf {dir}/bin &&
+                rm -rf {dir}/ui &&
+                rm -f {dir}/version_code {dir}/{filename}
+                "))
+                .spawn()?
+                .wait()?;
 
     Ok(())
-}
-
-fn get_http_response() -> Result<TcpStream> {
-    const URL: &str = "http://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk";
-    let request = format!(
-        "GET {} HTTP/1.1\r\n\
-         Host: down.sandai.net\r\n\
-         Connection: close\r\n\
-         \r\n",
-        URL
-    );
-
-    let mut stream = TcpStream::connect("down.sandai.net:80")?;
-    std::io::Write::write(&mut stream, request.as_bytes())?;
-
-    Ok(stream)
 }

@@ -59,7 +59,6 @@ fn main() -> anyhow::Result<()> {
             daemon::XunleiDaemon::from(config).execute()?;
         }
     }
-
     Ok(())
 }
 
