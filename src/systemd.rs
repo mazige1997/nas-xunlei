@@ -281,9 +281,9 @@ impl Running for XunleiUninstall {
             Systemd::systemctl(["disable", standard::APP_NAME])?;
             Systemd::systemctl(["stop", standard::APP_NAME])?;
             self.remove_service_file()?;
-            self.remove_package()?;
             Systemd::systemctl(["daemon-reload"])?;
         }
+        self.remove_package()?;
         Ok(())
     }
 }
