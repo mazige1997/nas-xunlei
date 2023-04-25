@@ -89,6 +89,7 @@ impl XunleiLocalAsset {
         loop {
             let n = reader.read(buf.as_mut())?;
             if n == 0 {
+                print!("\n");
                 break;
             }
             output_file.write_all(&buf[..n])?;

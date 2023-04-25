@@ -256,11 +256,10 @@ impl Running for XunleiDaemon {
             .expect("Failed to start ui thread");
 
         // waiting... child thread exit
-        ui_thread.join().expect("Failed to join ui_thread");
         backend_thread
             .join()
             .expect("Failed to join backend_thread");
-
+        ui_thread.join().expect("Failed to join ui_thread");
         Ok(())
     }
 }
