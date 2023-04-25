@@ -1,22 +1,46 @@
 use std::fs::File;
-use std::io::copy;
+use std::io::Read;
 use std::io::Result;
 use std::io::Write;
 
-const OUTPUT_FILE: &str = "/tmp/xunlei_bin/nasxunlei-DSM7-x86_64.spk";
+const OUTPUT_FILE: &str = ;
 
 fn main() -> Result<()> {
-    // let mut response = ureq::get("http://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk")
-    //     .call()
-    //     .unwrap()
-    //     .into_reader();
+    let response = ureq::get("http://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk")
+        .call()
+        .unwrap();
 
-    // let mut output_file = File::create(OUTPUT_FILE)?;
+    let total_size = response
+        .header("Content-Length")
+        .unwrap()
+        .parse::<u64>()
+        .unwrap();
 
-    // copy(&mut response, &mut output_file)?;
+    let pb = indicatif::ProgressBar::new(total_size);
+    pb.set_style(indicatif::ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
+        .unwrap()
+        .progress_chars("#>-"));
 
-    // output_file.flush()?;
-    // drop(output_file);
+    let mut output_file = File::create(OUTPUT_FILE)?;
+
+    // std::io::copy(&mut response.into_reader(), &mut output_file)?;
+    let mut downloaded = 0;
+    let mut buf = [0; 1024];
+    let mut reader = response.into_reader();
+    loop {
+        let n = reader.read(buf.as_mut())?;
+        if n == 0 {
+            break;
+        }
+        output_file.write_all(&buf[..n])?;
+        let new = std::cmp::min(downloaded + (n as u64), total_size);
+        downloaded = new;
+        pb.set_position(new);
+    }
+    pb.finish_with_message("downloaded");
+
+    output_file.flush()?;
+    drop(output_file);
     let filename = "nasxunlei-DSM7-x86_64.spk";
     let dir = "/tmp/xunlei_bin";
     std::process::Command::new("sh")

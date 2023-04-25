@@ -66,15 +66,40 @@ impl XunleiLocalAsset {
     }
 
     fn exestrct_package(&self) -> anyhow::Result<std::process::ExitStatus> {
-        let mut response = ureq::get(&format!("http://down.sandai.net/nas/{}", self.filename))
-            .call()?
-            .into_reader();
+        let response =
+            ureq::get(&format!("http://down.sandai.net/nas/{}", self.filename)).call()?;
+
+        let total_size = response
+            .header("Content-Length")
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+
+        let pb = indicatif::ProgressBar::new(total_size);
+        pb.set_style(indicatif::ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")
+                .unwrap()
+                .progress_chars("#>-"));
+
         if self.tmp.exists().not() {
             standard::create_dir_all(&self.tmp, 0o755)?;
         }
-        let file_path = self.tmp.join(self.filename.as_str());
-        let mut output_file = std::fs::File::create(&file_path)?;
-        std::io::copy(&mut response, &mut output_file)?;
+
+        let mut downloaded = 0;
+        let mut buf = [0; 1024];
+        let mut reader = response.into_reader();
+        let mut output_file = std::fs::File::create(self.tmp.join(self.filename.as_str()))?;
+        loop {
+            let n = reader.read(buf.as_mut())?;
+            if n == 0 {
+                break;
+            }
+            output_file.write_all(&buf[..n])?;
+            let new = std::cmp::min(downloaded + (n as u64), total_size);
+            downloaded = new;
+            pb.set_position(new);
+        }
+        pb.finish_with_message("downloaded");
+
         output_file.flush()?;
         drop(output_file);
 
