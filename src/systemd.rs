@@ -8,10 +8,12 @@ use anyhow::{Context, Ok};
 use rand::Rng;
 
 use crate::standard;
-use crate::Config;
-use crate::Running;
+
 use crate::xunlei_asset;
 use crate::xunlei_asset::Xunlei;
+
+use crate::Config;
+use crate::Running;
 
 pub struct XunleiInstall {
     description: &'static str,
