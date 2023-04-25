@@ -237,9 +237,9 @@ impl XunleiInstall {
             0o666,
         )?;
 
-        systemctl(["daemon-reload"])?;
-        systemctl(["enable", standard::APP_NAME])?;
-        systemctl(["start", standard::APP_NAME])?;
+        Systemd::systemctl(["daemon-reload"])?;
+        Systemd::systemctl(["enable", standard::APP_NAME])?;
+        Systemd::systemctl(["start", standard::APP_NAME])?;
         Ok(())
     }
 }
@@ -277,47 +277,54 @@ impl XunleiUninstall {
 
 impl Running for XunleiUninstall {
     fn execute(&self) -> anyhow::Result<()> {
-        if support() {
-            systemctl(["disable", standard::APP_NAME])?;
-            systemctl(["stop", standard::APP_NAME])?;
+        if Systemd::support() {
+            Systemd::systemctl(["disable", standard::APP_NAME])?;
+            Systemd::systemctl(["stop", standard::APP_NAME])?;
             self.remove_service_file()?;
             self.remove_package()?;
-            systemctl(["daemon-reload"])?;
+            Systemd::systemctl(["daemon-reload"])?;
         }
         Ok(())
     }
 }
 
-fn support() -> bool {
-    let child_res = std::process::Command::new("systemctl")
-        .arg("--help")
-        .output();
+struct Systemd;
 
-    match child_res {
-        Ok(output) => {
-            if output.status.success() {
-                return true;
+impl Systemd {
+    fn support() -> bool {
+        let child_res = std::process::Command::new("systemctl")
+            .arg("--help")
+            .output();
+
+        let support = match child_res {
+            Ok(output) => {
+                if output.status.success() {
+                    return true;
+                }
+                false
             }
+            Err(_) => false,
+        };
+        if support.not() {
             log::warn!("[XunleiInstall] Your system does not support systemctl");
-            false
         }
-        Err(_) => false,
+        support
     }
-}
 
-fn systemctl<I, S>(args: I) -> anyhow::Result<()>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<std::ffi::OsStr> + std::convert::AsRef<std::ffi::OsStr>,
-{
-    let output = std::process::Command::new("systemctl")
-        .args(args)
-        .output()?;
-    if output.status.success().not() {
-        log::error!(
-            "[systemctl] {}",
-            String::from_utf8_lossy(&output.stderr).trim()
-        );
+    fn systemctl<I, S>(args: I) -> anyhow::Result<()>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<std::ffi::OsStr> + std::convert::AsRef<std::ffi::OsStr>,
+    {
+        let output = std::process::Command::new("systemctl")
+            .args(args)
+            .output()?;
+        if output.status.success().not() {
+            log::error!(
+                "[systemctl] {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            );
+        }
+        Ok(())
     }
-    Ok(())
 }
