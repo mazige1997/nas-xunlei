@@ -160,7 +160,6 @@ jobs:
         run: |
           apt update && apt install wget -y
           bash +x unpack.sh
-          ls-lah
 
       - name: Build wheels - manylinux
         uses: PyO3/maturin-action@main
