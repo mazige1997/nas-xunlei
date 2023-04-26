@@ -232,13 +232,10 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.platform.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
-          for file in ./*.tar.gz; do
-            mv "$file" "${file/.tar.gz/-embed.tar.gz}"
-          done
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256
           cd -
-
+          
           cd target/${{ matrix.platform.target }}/debian
           for file in ./*.deb; do
             mv "$file" "${file/.deb/-embed.deb}"
