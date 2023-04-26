@@ -124,7 +124,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: "startsWith(github.ref, 'refs/tags/')"
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
           files: |
             target/${{ matrix.platform.target }}/release/xunlei*.tar.gz*
             target/${{ matrix.platform.target }}/debian/xunlei_*.deb
