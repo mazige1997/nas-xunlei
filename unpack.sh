@@ -7,7 +7,16 @@ fi
 pushd $dir
 wget https://down.sandai.net/nas/nasxunlei-DSM7-x86_64.spk
 
-if [ "$(uname -m)" = "aarch64" ]; then arch=armv8; else arch=$(uname -m); fi
+if [ "$(uname -m)" = "aarch64" ]; then
+ arch=armv8; 
+else
+ arch=$(uname -m);
+fi
+
+if [ -n "$1" ]; then
+   arch=$1 
+fi
+
 tar --wildcards -Oxf $(find . -type f -name \*-${arch}.spk | head -n1) package.tgz | tar --wildcards -xJC ${dir} 'bin/bin/*' 'ui/index.cgi'
 mv ${dir}/bin/bin/* ${dir}/
 mv ${dir}/ui/index.cgi ${dir}/xunlei-pan-cli-web
