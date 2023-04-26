@@ -297,12 +297,7 @@ impl Systemd {
             .output();
 
         let support = match child_res {
-            Ok(output) => {
-                if output.status.success() {
-                    return true;
-                }
-                false
-            }
+            Ok(output) => output.status.success()
             Err(_) => false,
         };
         if support.not() {
