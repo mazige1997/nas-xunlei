@@ -28,6 +28,10 @@ jobs:
             sub: aarch64
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
+    container:
+      image: docker://ghcr.io/rust-cross/rust-musl-cross:${{ matrix.platform.target }}
+      env:
+        CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
 
     steps:
       - uses: actions/checkout@v3
@@ -42,7 +46,6 @@ jobs:
         with:
           command: build
           target: ${{ matrix.platform.target }} 
-          container: off
           args: --release
 
       - name: Install cargo packages
