@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: "x86_64-unknown-linux-musl"
+            wheel: true
+            deb: true
+          - target: "aarch64-unknown-linux-musl"
+            wheel: true
+            deb: true
+    container:
+      image: docker://ghcr.io/rust-cross/rust-musl-cross:${{ matrix.platform.target }}
+      env:
+        CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build wheels - manylinux
+        uses: PyO3/maturin-action@main
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: auto
+          container: off
+          args: --release -o dist --strip
+          sccache: 'true'
+
+      - name: Build wheels - musllinux
+        if: matrix.platform.wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: musllinux_1_1
+          container: off
+          args: --release --out dist --strip
+          sccache: 'true'
+
+      - name: Install cargo packages
+        if: matrix.platform.deb
+        run: cargo install cargo-deb cargo-generate-rpm
+
+      - name: Build Debian package
+        if: matrix.platform.deb
+        run: cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+
+      - name: Build RPM package
+        if: matrix.platform.deb
+        run: cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
+
+      - name: Upload wheels
+        if: matrix.platform.wheel
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
+          if-no-files-found: error
+
+      - name: Install upx
+        working-directory: /tmp
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          set -ex
+          git clone --recursive https://github.com/upx/upx.git
+          cd upx
+          make
+          cp build/release/upx /usr/local/bin/upx
+
+      - name: Upx compress binary
+        run: upx target/${{ matrix.platform.target }}/release/xunlei
+
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform.target }}-bin
+          path: target/${{ matrix.platform.target }}/release/xunlei
+          if-no-files-found: error
+
+      - name: Upload deb artifacts
+        if: matrix.platform.deb
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform.target }}-deb
+          path: target/${{ matrix.platform.target }}/debian/xunlei_*.deb
+          if-no-files-found: error
+
+      - name: Upload RPM artifacts
+        if: matrix.platform.deb
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform.target }}-rpm
+          path: target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
+          if-no-files-found: error
+
+      - name: Get tag
+        if: "startsWith(github.ref, 'refs/tags/')"
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+
+      - name: Archive binary
+        if: "startsWith(github.ref, 'refs/tags/')"
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
+          cd -
+
+      - name: Upload binaries to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: "startsWith(github.ref, 'refs/tags/')"
+        with:
+          files: |
+            target/${{ matrix.platform.target }}/release/xunlei*.tar.gz*
+            target/${{ matrix.platform.target }}/debian/xunlei_*.deb
+            target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          generate_release_notes: true
+
+      - name: Remove cached deb and RPM packages
+        if: matrix.platform.deb
+        run: |
+          rm -rf target/${{ matrix.platform.target }}/debian
+          rm -rf target/${{ matrix.platform.target }}/generate-rpm
