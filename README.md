@@ -2,6 +2,8 @@
 
 nas-xunlei从迅雷群晖套件中提取，用于发行版Linux平台的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
 
+- 邀请码（3H9F7Y6D）
+
 ```shell
 ❯ ./xunlei                   
 Synology Nas Thunder runs on Linux
