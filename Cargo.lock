@@ -3,23 +3,6 @@
 version = 3
 
 [[package]]
-name = "Xunlei"
-version = "3.5.2"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "env_logger",
- "indicatif",
- "libc",
- "log",
- "rand",
- "rouille",
- "rust-embed",
- "ureq",
-]
-
-[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1564,3 +1547,20 @@ name = "windows_x86_64_msvc"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
+
+[[package]]
+name = "xunlei"
+version = "3.5.2"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "env_logger",
+ "indicatif",
+ "libc",
+ "log",
+ "rand",
+ "rouille",
+ "rust-embed",
+ "ureq",
+]

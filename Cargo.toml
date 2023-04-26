@@ -53,5 +53,5 @@ assets = [
 [package.metadata.generate-rpm]
 assets = [
     { source = "target/release/xunlei", dest = "/usr/bin/xunlei", mode = "0755" },
-    { source = "LICENSE.md", dest = "/usr/share/doc/xunlei/LICENSE", doc = true, mode = "0644" }
+    { source = "LICENSE", dest = "/usr/share/doc/xunlei/LICENSE", doc = true, mode = "0644" }
 ]
