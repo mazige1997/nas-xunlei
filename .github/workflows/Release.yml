@@ -51,7 +51,7 @@ jobs:
 
       - name: Install cargo packages
         if: matrix.platform.deb
-        run: cargo install cargo-deb cargo-generate-rpm
+        run: pip install cargo-deb cargo-generate-rpm
 
       - name: Build Debian package
         if: matrix.platform.deb
