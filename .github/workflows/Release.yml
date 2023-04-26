@@ -29,7 +29,7 @@ jobs:
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
-      image: docker://ghcr.io/rust-cross/rust-musl-cross:${{ matrix.platform.target }}
+      image: docker://messense/cargo-zigbuild:latest
       env:
         CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
 
