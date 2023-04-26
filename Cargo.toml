@@ -32,3 +32,17 @@ opt-level = 'z'
 strip = true
 codegen-units = 1
 panic = "abort"
+
+[package.metadata.deb]
+maintainer = "gngpp <gngppz@gmail.com>"
+copyright = "2023, gngpp <gngppz@gmail.com>"
+license-file = ["LICENSE", "MIT"]
+extended-description = """\
+Synology Nas Thunder runs on Linux"""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/xunlei", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/xunlei/README", "644"],
+]
