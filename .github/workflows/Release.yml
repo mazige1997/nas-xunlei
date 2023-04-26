@@ -61,14 +61,6 @@ jobs:
         if: matrix.platform.deb
         run: cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
 
-      - name: Upload wheels
-        if: matrix.platform.wheel
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
-          if-no-files-found: error
-
       - name: Install upx
         working-directory: /tmp
         env:
@@ -192,14 +184,6 @@ jobs:
         if: matrix.platform.deb
         run: cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
 
-      - name: Upload wheels
-        if: matrix.platform.wheel
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels
-          path: dist
-          if-no-files-found: error
-
       - name: Install upx
         working-directory: /tmp
         env:
@@ -262,7 +246,7 @@ jobs:
           cd -
 
           cd target/${{ matrix.platform.target }}/generate-rpm
-          for file in "./*.rpm"; do
+          for file in ./*.rpm; do
             mv "$file" "${file/.rpm/-embed.rpm}"
           done 
           cd -
