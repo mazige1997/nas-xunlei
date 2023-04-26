@@ -42,6 +42,12 @@ depends = "$auto"
 section = "utility"
 priority = "optional"
 assets = [
-    ["target/release/xunlei", "usr/bin/", "755"],
+    ["target/release/xunlei", "usr/bin/xunlei", "755"],
     ["README.md", "usr/share/doc/xunlei/README", "644"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/xunlei", dest = "/usr/bin/xunlei", mode = "0755" },
+    { source = "LICENSE.md", dest = "/usr/share/doc/xunlei/LICENSE", doc = true, mode = "0644" }
 ]
