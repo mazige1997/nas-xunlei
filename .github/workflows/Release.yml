@@ -29,12 +29,16 @@ jobs:
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
-      image: docker://ghcr.io/rust-cross/cargo-zigbuild:latest
+      image: docker://rust:latest
       env:
         CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
 
     steps:
       - uses: actions/checkout@v3
+      - name: Init
+        run: |
+          rustup target add ${{ matrix.platform.target }}
+  
       - name: Embed
         shell: bash
         run: |
@@ -44,7 +48,8 @@ jobs:
           fi
 
       - name: Install cargo packages
-        run: cargo install cargo-deb cargo-generate-rpm
+        run: |
+          cargo install cargo-deb cargo-generate-rpm
 
       - name: Build Debian package
         run: |
