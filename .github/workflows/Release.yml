@@ -29,7 +29,7 @@ jobs:
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
-      image: docker://messense/cargo-zigbuild:latest
+      image: docker://ghcr.io/rust-cross/cargo-zigbuild:latest
       env:
         CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
 
@@ -41,12 +41,6 @@ jobs:
             apt update && apt install wget -y
             bash +x unpack.sh ${{ matrix.platform.sub }}
           fi
-
-      - uses: PyO3/maturin-action@v1
-        with:
-          command: build
-          target: ${{ matrix.platform.target }} 
-          args: --release
 
       - name: Install cargo packages
         run: cargo install cargo-deb cargo-generate-rpm
