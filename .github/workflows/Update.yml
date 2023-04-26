@@ -1,0 +1,38 @@
+name: Update nas-xunlei version
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every day
+    - cron: '0 0 * * *'
+
+jobs:
+  update:
+    name: Update nas-xunlei version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Update
+      id: update
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        dir=$(pwd)
+        $dir/unpack.sh
+        current_version=$(git describe --tags --abbrev=0 | sed 's/^v//')
+        new_version=$(cat bin/version)
+        export new_version
+        sed 's/$current_version/$new_version/g' Cargo.toml
+        echo "new_version=$new_version" >> $GITHUB_ENV
+        echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        branch: update-nas-xunlei-version
+        delete-branch: true
+        add-paths: |
+          Cargo.toml
+        title: 'Update nas-xunlei to v${{ steps.update.outputs.new_version }}'
+        commit-message: 'Update nas-xunlei to v${{ steps.update.outputs.new_version }}'

@@ -158,7 +158,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Embed
         run: |
+          apt update && apt install wget -y
           bash +x unpack.sh
+          ls-lah
+
       - name: Build wheels - manylinux
         uses: PyO3/maturin-action@main
         with:
@@ -244,17 +247,33 @@ jobs:
       - name: Archive binary
         if: "startsWith(github.ref, 'refs/tags/')"
         run: |
-          cd target/${{ matrix.platform.target }}/release
+          pushd target/${{ matrix.platform.target }}/release
           tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
           shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
-          cd -
+          for file in ./*.tar.gz; do
+            mv "$file" "${file/.tar.gz/-embed.tar.gz}"
+          done
+          popd
+
+          pushd target/${{ matrix.platform.target }}/debian
+          for file in ./*.deb; do
+            mv "$file" "${file/.deb/-embed.deb}"
+          done 
+          popd
+
+          pushd target/${{ matrix.platform.target }}/generate-rpm
+          for file in ./*.rpm; do
+            mv "$file" "${file/.rpm/-embed.rpm}"
+          done 
+          popd
+
+
 
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         if: "startsWith(github.ref, 'refs/tags/')"
         with:
           token: ${{ secrets.TOKEN }}
-          name: ${{ github.ref }}-embed
           files: |
             target/${{ matrix.platform.target }}/release/xunlei*.tar.gz*
             target/${{ matrix.platform.target }}/debian/xunlei_*.deb
