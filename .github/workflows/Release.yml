@@ -36,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Embed
+        shell: bash
         run: |
           if [ "${{ matrix.embed }}" == "true" ]; then
             apt update && apt install wget -y
