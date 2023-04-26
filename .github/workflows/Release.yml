@@ -48,10 +48,12 @@ jobs:
           fi
 
       - name: Install cargo packages
+        shell: bash
         run: |
           cargo install cargo-deb cargo-generate-rpm
 
       - name: Build Debian package
+        shell: bash
         run: |
           if [ "${{ matrix.embed }}" == "true" ]; then
               cargo deb -- --release --features=embed --target=${{ matrix.platform.target }}
@@ -60,6 +62,7 @@ jobs:
           fi
           
       - name: Build RPM package
+        shell: bash
         run: |
           if [ "${{ matrix.embed }}" == "true" ]; then
               cargo generate-rpm -- --release --features=embed --target=${{ matrix.platform.target }}
