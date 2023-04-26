@@ -36,7 +36,7 @@ panic = "abort"
 [package.metadata.deb]
 maintainer = "gngpp <gngppz@gmail.com>"
 copyright = "2023, gngpp <gngppz@gmail.com>"
-license-file = ["LICENSE", "MIT"]
+license-file = ["LICENSE", "4"]
 extended-description = "Synology Nas Thunder runs on Linux"
 depends = "$auto"
 section = "utility"
