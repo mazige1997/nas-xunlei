@@ -69,15 +69,13 @@ impl XunleiInstall {
         Ok(())
     }
 
-    fn extract(&self) -> anyhow::Result<()> {
+    fn install(&self) -> anyhow::Result<std::path::PathBuf> {
         log::info!("[XunleiInstall] Installing in progress");
 
         // /var/packages/pan-xunlei-com/target
         let target_dir = PathBuf::from(standard::SYNOPKG_PKGDEST);
         // /var/packages/pan-xunlei-com/target/host
         let host_dir = PathBuf::from(standard::SYNOPKG_HOST);
-        // /var/packages/pan-xunlei-com/xunlei
-        let start_endpoint = PathBuf::from(standard::SYNOPKG_PKGBASE).join(standard::APP_NAME);
 
         standard::create_dir_all(&target_dir, 0o755)?;
 
@@ -190,20 +188,11 @@ impl XunleiInstall {
             }
         }
 
-        let exe_path = std::env::current_exe()?;
-        if exe_path.exists() {
-            if std::fs::copy(exe_path, &start_endpoint)? == 0 {
-                log::error!("description Failed to copy the execution file. the length is 0")
-            } else {
-                log::info!("[XunleiInstall] Install to: {}", start_endpoint.display());
-            }
-        }
-
         log::info!("[XunleiInstall] Installation completed");
-        Ok(())
+        Ok(std::env::current_exe()?)
     }
 
-    fn systemd(&self) -> anyhow::Result<()> {
+    fn systemd(&self, execute: PathBuf) -> anyhow::Result<()> {
         if Systemd::support().not() {
             return Ok(());
         }
@@ -216,7 +205,7 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart=/var/packages/pan-xunlei-com/xunlei execute {} -p {} -d {} -c {}
+                ExecStart={} execute {} -p {} -d {} -c {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
@@ -224,6 +213,7 @@ impl XunleiInstall {
                 [Install]
                 WantedBy=multi-user.target"#,
             self.description,
+            execute.display(),
             internal,
             self.port,
             self.download_path.display(),
@@ -247,24 +237,21 @@ impl XunleiInstall {
 impl Running for XunleiInstall {
     fn execute(&self) -> anyhow::Result<()> {
         self.config()?;
-        self.extract()?;
-        self.systemd()
+        self.systemd(self.install()?)
     }
 }
 
 pub struct XunleiUninstall;
 
 impl XunleiUninstall {
-    fn remove_service_file(&self) -> anyhow::Result<()> {
-        let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
-        if path.exists() {
-            std::fs::remove_file(path)?;
-            log::info!("[XunleiUninstall] Uninstall xunlei service");
+    fn uninstall(&self) -> anyhow::Result<()> {
+        if Systemd::support() {
+            let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
+            if path.exists() {
+                std::fs::remove_file(path)?;
+                log::info!("[XunleiUninstall] Uninstall xunlei service");
+            }
         }
-        Ok(())
-    }
-
-    fn remove_package(&self) -> anyhow::Result<()> {
         let path = PathBuf::from(standard::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
@@ -280,10 +267,9 @@ impl Running for XunleiUninstall {
         if Systemd::support() {
             Systemd::systemctl(["disable", standard::APP_NAME])?;
             Systemd::systemctl(["stop", standard::APP_NAME])?;
-            self.remove_service_file()?;
             Systemd::systemctl(["daemon-reload"])?;
         }
-        self.remove_package()?;
+        self.uninstall()?;
         Ok(())
     }
 }
