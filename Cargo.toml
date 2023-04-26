@@ -19,6 +19,9 @@ indicatif = "0.17.3"
 rouille= "3.6.2"
 clap = { version = "4.0.18", features = ["derive"] }
 
+[features]
+embed = []
+
 [[bin]]
 name = "xunlei"
 path = "src/main.rs"

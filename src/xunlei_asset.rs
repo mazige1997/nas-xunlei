@@ -1,7 +1,8 @@
 use core::str;
-use std::{borrow::Cow, io::Write, ops::Not, path::PathBuf};
+use std::borrow::Cow;
 
-use crate::standard;
+#[cfg(not(feature = "embed"))]
+use std::{io::Write, ops::Not, path::PathBuf};
 
 pub trait Xunlei {
     fn version(&self) -> anyhow::Result<String>;
@@ -13,7 +14,7 @@ pub trait Xunlei {
 
 #[cfg(feature = "embed")]
 #[derive(rust_embed::RustEmbed)]
-#[folder = "xunlei/"]
+#[folder = "bin/"]
 struct Asset;
 
 #[cfg(feature = "embed")]
@@ -54,7 +55,7 @@ impl XunleiLocalAsset {
     fn new() -> anyhow::Result<Self> {
         let xunlei = XunleiLocalAsset {
             tmp_path: PathBuf::from("/tmp/xunlei_bin"),
-            filename: format!("nasxunlei-DSM7-{}.spk", standard::SUPPORT_ARCH),
+            filename: format!("nasxunlei-DSM7-{}.spk", crate::standard::SUPPORT_ARCH),
         };
         let status = xunlei.exestrct_package()?;
         if status.success().not() {
@@ -74,7 +75,7 @@ impl XunleiLocalAsset {
             .progress_chars("#>-"));
 
         if self.tmp_path.exists().not() {
-            standard::create_dir_all(&self.tmp_path, 0o755)?;
+            crate::standard::create_dir_all(&self.tmp_path, 0o755)?;
         }
 
         let mut downloaded = 0;

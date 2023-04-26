@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dir=$(pwd)/xunlei;
+dir=$(pwd)/bin;
 if ! [ -d "$dir" ]; then
     mkdir $dir  
 fi
