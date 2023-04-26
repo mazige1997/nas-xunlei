@@ -36,10 +36,3 @@ jobs:
         with:
           components: clippy
       - run: cargo clippy --all-features
-
-  spellcheck:
-    name: spellcheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: codespell-project/actions-codespell@master
