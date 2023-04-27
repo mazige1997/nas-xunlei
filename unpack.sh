@@ -1,18 +1,17 @@
 #!/bin/bash
-arch=$(uname -m)
 dir=$(pwd)/bin;
 if ! [ -d "$dir" ]; then
     mkdir $dir  
 fi
 pushd $dir
-
-if [ "$1" = "aarch64" ]; then
+:${arch:=$(uname -m)}
+if [ "$arch" = "aarch64" ]; then
  arch=armv8; 
 else
  arch=$(uname -m);
 fi
 
-wget https://down.sandai.net/nas/nasxunlei-DSM7-$(arch).spk
+wget https://down.sandai.net/nas/nasxunlei-DSM7-${arch}.spk
 
 tar --wildcards -Oxf $(find . -type f -name \*-${arch}.spk | head -n1) package.tgz | tar --wildcards -xJC ${dir} 'bin/bin/*' 'ui/index.cgi'
 mv ${dir}/bin/bin/* ${dir}/
