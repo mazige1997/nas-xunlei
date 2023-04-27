@@ -24,9 +24,9 @@ rouille= "3.6.2"
 clap = { version = "4.0.18", features = ["derive"] }
 
 [features]
-default = ["launcher", "systemd"]
-embed = ["launcher", "systemd"]
-launcher = []
+default = ["launch", "systemd"]
+embed = ["launch", "systemd"]
+launch = []
 systemd = []
 
 [[bin]]

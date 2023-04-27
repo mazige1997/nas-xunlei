@@ -1,5 +1,5 @@
-#[cfg(feature = "launcher")]
-pub mod launcher;
+#[cfg(feature = "launch")]
+pub mod launch;
 pub mod standard;
 #[cfg(feature = "systemd")]
 pub mod systemd;
@@ -29,9 +29,9 @@ pub enum Commands {
     #[cfg(feature = "systemd")]
     /// Uninstall xunlei
     Uninstall,
-    #[cfg(feature = "launcher")]
-    /// Launcher xunlei
-    Launcher(Config),
+    #[cfg(feature = "launch")]
+    /// Launch xunlei
+    Launch(Config),
 }
 
 #[derive(Args)]
@@ -62,9 +62,9 @@ fn main() -> anyhow::Result<()> {
         Commands::Uninstall => {
             systemd::XunleiUninstall {}.execute()?;
         }
-        #[cfg(feature = "launcher")]
-        Commands::Launcher(config) => {
-            launcher::XunleiLauncher::from(config).execute()?;
+        #[cfg(feature = "launch")]
+        Commands::Launch(config) => {
+            launch::XunleiLauncher::from(config).execute()?;
         }
     }
     Ok(())
