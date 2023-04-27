@@ -60,7 +60,7 @@ jobs:
           mv target/x86_64-unknown-linux-musl/release/xunlei openwrt-x86_64-${{ steps.tag.outputs.tag }}/
           tar -cf - openwrt-x86_64-${{ steps.tag.outputs.tag }} | xz -9 -c - > openwrt-x86_64-${{ steps.tag.outputs.tag }}.tar.xz
 
-          bash +x unpack.sh x86_64
+          bash +x unpack.sh aarch64
           mv bin openwrt-aarch64-${{ steps.tag.outputs.tag }}
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
           mv target/aarch64-unknown-linux-musl/release/xunlei openwrt-aarch64-${{ steps.tag.outputs.tag }}/
