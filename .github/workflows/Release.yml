@@ -61,7 +61,7 @@ jobs:
           shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
           cd -
 
-          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-platform --platform launch
+          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features launch
           upx target/${{ matrix.platform.target }}/release/xunlei
           cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
           cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
@@ -73,7 +73,7 @@ jobs:
           shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz.sha256
           cd -
  
-          bash +x unpack.sh ${{ matrix.platform.target.sub }} && cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-platform --platform embed
+          bash +x unpack.sh ${{ matrix.platform.target.sub }} && cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features embed
           upx target/${{ matrix.platform.target }}/release/xunlei
           cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
           cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
