@@ -58,7 +58,7 @@ jobs:
           cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features launch
           cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
           cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-          bash +x unpack.sh ${{ matrix.platform.target.sub }} && cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features embed
+          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features embed
           cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
           cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
 
