@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
         platform:
           - target: "x86_64-unknown-linux-gnu"
@@ -31,7 +30,7 @@ jobs:
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
-      image: docker://messense/cargo-zigbuild:latest
+      image: docker://ghcr.io/messense/cargo-zigbuild:latest
 
     steps:
       - uses: actions/checkout@v3
