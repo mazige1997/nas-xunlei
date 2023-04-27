@@ -15,20 +15,6 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - target: "x86_64-unknown-linux-gnu"
-            sub: x86_64
-            deb_sub: amd64
-            rpm_sub: x86_64
-          - target: "x86_64-unknown-linux-musl"
-            sub: x86_64
-          - target: "aarch64-unknown-linux-gnu"
-            sub: aarch64
-          - target: "aarch64-unknown-linux-musl"
-            sub: aarch64
     container:
       image: docker://ghcr.io/messense/cargo-zigbuild:latest
 
@@ -52,77 +38,255 @@ jobs:
   
       - name: Prebuild package
         run: |
-          cargo zigbuild --release --target=${{ matrix.platform.target }}
-          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features launch
-          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features embed
-          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-
+          cargo zigbuild --release
+          cargo deb --no-build --no-strip
+          cargo generate-rpm --payload-compress none
+          cargo zigbuild --no-default-features --features launch
+          cargo deb--no-build --no-strip
+          cargo generate-rpm --payload-compress none
+          cargo zigbuild --release --no-default-features --features embed
+          cargo deb --no-build --no-strip
+          cargo generate-rpm --payload-compress none
           
-      - name: Build package
+      - name: Build x86_64-unknown-linux-gnu package
         if: "startsWith(github.ref, 'refs/tags/')"
         shell: bash
         run: |
           root=$(pwd)
           mkdir uploads
 
-          cargo zigbuild --release --target=${{ matrix.platform.target }}
-          upx target/${{ matrix.platform.target }}/release/xunlei
-          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-          cd target/${{ matrix.platform.target }}/release
-            tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
-            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
-            mv xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz $root/uploads/
-            mv xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256 $root/uploads/
+          cargo zigbuild --release --target=x86_64-unknown-linux-gnu
+          upx target/x86_64-unknown-linux-gnu/release/xunlei
+          cargo deb --target=x86_64-unknown-linux-gnu --no-build --no-strip
+          cargo generate-rpm --target=x86_64-unknown-linux-gnu --payload-compress none
+          cd target/x86_64-unknown-linux-gnu/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu.tar.gz.sha256 $root/uploads/
           cd -
-          mv target/${{ matrix.platform.target }}/debian/* $root/uploads/
-          mv target/${{ matrix.platform.target }}/generate-rpm/* $root/uploads/
+          mv target/x86_64-unknown-linux-gnu/debian/* $root/uploads/
+          mv target/x86_64-unknown-linux-gnu/generate-rpm/* $root/uploads/
 
-          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features launch
-          upx target/${{ matrix.platform.target }}/release/xunlei
-          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-          cd target/${{ matrix.platform.target }}/release
-            tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz xunlei
-            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz.sha256
-            mv xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz $root/uploads/
-            mv xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz.sha256 $root/uploads/
+          cargo zigbuild --release --target=x86_64-unknown-linux-gnu --no-default-features --features launch
+          upx target/x86_64-unknown-linux-gnu/release/xunlei
+          cargo deb --target=x86_64-unknown-linux-gnu --no-build --no-strip
+          cargo generate-rpm --target=x86_64-unknown-linux-gnu --payload-compress none
+          cd target/x86_64-unknown-linux-gnu/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-launch.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-launch.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-launch.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-launch.tar.gz.sha256 $root/uploads/
           cd -
-          cd target/${{ matrix.platform.target }}/debian
+          cd target/x86_64-unknown-linux-gnu/debian
             rename 's/xunlei/xunlei-launch/' xunlei*.deb
             mv ./* $root/uploads/
           cd -
-          cd target/${{ matrix.platform.target }}/generate-rpm
+          cd target/x86_64-unknown-linux-gnu/generate-rpm
             rename 's/xunlei/xunlei-launch/' xunlei*.rpm
             mv ./* $root/uploads/
           cd -
  
-          bash +x unpack.sh ${{ matrix.platform.target.sub }} && cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features embed
-          upx target/${{ matrix.platform.target }}/release/xunlei
-          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
-          cd target/${{ matrix.platform.target }}/release
-            tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz xunlei
-            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256
-            mv xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz $root/uploads/
-            mv xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256 $root/uploads/
+          bash +x unpack.sh && cargo zigbuild --release --target=x86_64-unknown-linux-gnu --no-default-features --features embed
+          upx target/x86_64-unknown-linux-gnu/release/xunlei
+          cargo deb --target=x86_64-unknown-linux-gnu --no-build --no-strip
+          cargo generate-rpm --target=x86_64-unknown-linux-gnu --payload-compress none
+          cd target/x86_64-unknown-linux-gnu/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-embed.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-embed.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-embed.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-gnu-embed.tar.gz.sha256 $root/uploads/
           cd -
-          cd target/${{ matrix.platform.target }}/debian
+          cd target/x86_64-unknown-linux-gnu/debian
             rename 's/xunlei/xunlei-embed/' xunlei*.deb
             mv ./* $root/uploads/
           cd -
-          cd target/${{ matrix.platform.target }}/generate-rpm
+          cd target/x86_64-unknown-linux-gnu/generate-rpm
             rename 's/xunlei/xunlei-embed/' xunlei*.rpm
             mv ./* $root/uploads/
           cd -
 
           ls -lah uploads
 
+      - name: Build x86_64-unknown-linux-musl package
+        if: "startsWith(github.ref, 'refs/tags/')"
+        shell: bash
+        run: |
+          root=$(pwd)
+          mkdir uploads
+
+          cargo zigbuild --release --target=x86_64-unknown-linux-musl
+          upx target/x86_64-unknown-linux-musl/release/xunlei
+          cargo deb --target=x86_64-unknown-linux-musl --no-build --no-strip
+          cargo generate-rpm --target=x86_64-unknown-linux-musl --payload-compress none
+          cd target/x86_64-unknown-linux-musl/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl.tar.gz.sha256 $root/uploads/
+          cd -
+          mv target/x86_64-unknown-linux-musl/debian/* $root/uploads/
+          mv target/x86_64-unknown-linux-musl/generate-rpm/* $root/uploads/
+
+          cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
+          upx target/x86_64-unknown-linux-musl/release/xunlei
+          cargo deb --target=x86_64-unknown-linux-musl --no-build --no-strip
+          cargo generate-rpm --target=x86_64-unknown-linux-musl --payload-compress none
+          cd target/x86_64-unknown-linux-musl/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-launch.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-launch.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-launch.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-launch.tar.gz.sha256 $root/uploads/
+          cd -
+          cd target/x86_64-unknown-linux-musl/debian
+            rename 's/xunlei/xunlei-launch/' xunlei*.deb
+            mv ./* $root/uploads/
+          cd -
+          cd target/x86_64-unknown-linux-musl/generate-rpm
+            rename 's/xunlei/xunlei-launch/' xunlei*.rpm
+            mv ./* $root/uploads/
+          cd -
+ 
+          bash +x unpack.sh && cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features embed
+          upx target/x86_64-unknown-linux-musl/release/xunlei
+          cargo deb --target=x86_64-unknown-linux-musl --no-build --no-strip
+          cargo generate-rpm --target=x86_64-unknown-linux-musl --payload-compress none
+          cd target/x86_64-unknown-linux-musl/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-embed.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-embed.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-embed.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.x86_64-unknown-linux-musl-embed.tar.gz.sha256 $root/uploads/
+          cd -
+          cd target/x86_64-unknown-linux-musl/debian
+            rename 's/xunlei/xunlei-embed/' xunlei*.deb
+            mv ./* $root/uploads/
+          cd -
+          cd target/x86_64-unknown-linux-musl/generate-rpm
+            rename 's/xunlei/xunlei-embed/' xunlei*.rpm
+            mv ./* $root/uploads/
+          cd -
+
+          ls -lah uploads
+
+      - name: Build aarch64-unknown-linux-gnu package
+        if: "startsWith(github.ref, 'refs/tags/')"
+        shell: bash
+        run: |
+          root=$(pwd)
+          mkdir uploads
+
+          cargo zigbuild --release --target=aarch64-unknown-linux-gnu
+          upx target/aarch64-unknown-linux-gnu/release/xunlei
+          cargo deb --target=aarch64-unknown-linux-gnu --no-build --no-strip
+          cargo generate-rpm --target=aarch64-unknown-linux-gnu --payload-compress none
+          cd target/aarch64-unknown-linux-gnu/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu.tar.gz.sha256 $root/uploads/
+          cd -
+          mv target/aarch64-unknown-linux-gnu/debian/* $root/uploads/
+          mv target/aarch64-unknown-linux-gnu/generate-rpm/* $root/uploads/
+
+          cargo zigbuild --release --target=aarch64-unknown-linux-gnu --no-default-features --features launch
+          upx target/aarch64-unknown-linux-gnu/release/xunlei
+          cargo deb --target=aarch64-unknown-linux-gnu --no-build --no-strip
+          cargo generate-rpm --target=aarch64-unknown-linux-gnu --payload-compress none
+          cd target/aarch64-unknown-linux-gnu/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-launch.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-launch.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-launch.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-launch.tar.gz.sha256 $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-gnu/debian
+            rename 's/xunlei/xunlei-launch/' xunlei*.deb
+            mv ./* $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-gnu/generate-rpm
+            rename 's/xunlei/xunlei-launch/' xunlei*.rpm
+            mv ./* $root/uploads/
+          cd -
+ 
+          bash +x unpack.sh aarch64 && cargo zigbuild --release --target=aarch64-unknown-linux-gnu --no-default-features --features embed
+          upx target/aarch64-unknown-linux-gnu/release/xunlei
+          cargo deb --target=aarch64-unknown-linux-gnu --no-build --no-strip
+          cargo generate-rpm --target=aarch64-unknown-linux-gnu --payload-compress none
+          cd target/aarch64-unknown-linux-gnu/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-embed.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-embed.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-embed.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-gnu-embed.tar.gz.sha256 $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-gnu/debian
+            rename 's/xunlei/xunlei-embed/' xunlei*.deb
+            mv ./* $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-gnu/generate-rpm
+            rename 's/xunlei/xunlei-embed/' xunlei*.rpm
+            mv ./* $root/uploads/
+          cd -
+
+          ls -lah uploads
+
+      - name: Build aarch64-unknown-linux-musl package
+        if: "startsWith(github.ref, 'refs/tags/')"
+        shell: bash
+        run: |
+          root=$(pwd)
+          mkdir uploads
+
+          cargo zigbuild --release --target=aarch64-unknown-linux-musl
+          upx target/aarch64-unknown-linux-musl/release/xunlei
+          cargo deb --target=aarch64-unknown-linux-musl --no-build --no-strip
+          cargo generate-rpm --target=aarch64-unknown-linux-musl --payload-compress none
+          cd target/aarch64-unknown-linux-musl/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl.tar.gz.sha256 $root/uploads/
+          cd -
+          mv target/aarch64-unknown-linux-musl/debian/* $root/uploads/
+          mv target/aarch64-unknown-linux-musl/generate-rpm/* $root/uploads/
+
+          cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
+          upx target/aarch64-unknown-linux-musl/release/xunlei
+          cargo deb --target=aarch64-unknown-linux-musl --no-build --no-strip
+          cargo generate-rpm --target=aarch64-unknown-linux-musl --payload-compress none
+          cd target/aarch64-unknown-linux-musl/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-launch.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-launch.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-launch.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-launch.tar.gz.sha256 $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-musl/debian
+            rename 's/xunlei/xunlei-launch/' xunlei*.deb
+            mv ./* $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-musl/generate-rpm
+            rename 's/xunlei/xunlei-launch/' xunlei*.rpm
+            mv ./* $root/uploads/
+          cd -
+ 
+          bash +x unpack.sh aarch64 && cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features embed
+          upx target/aarch64-unknown-linux-musl/release/xunlei
+          cargo deb --target=aarch64-unknown-linux-musl --no-build --no-strip
+          cargo generate-rpm --target=aarch64-unknown-linux-musl --payload-compress none
+          cd target/aarch64-unknown-linux-musl/release
+            tar czvf xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-embed.tar.gz xunlei
+            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-embed.tar.gz.sha256
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-embed.tar.gz $root/uploads/
+            mv xunlei-${{ steps.tag.outputs.tag }}.aarch64-unknown-linux-musl-embed.tar.gz.sha256 $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-musl/debian
+            rename 's/xunlei/xunlei-embed/' xunlei*.deb
+            mv ./* $root/uploads/
+          cd -
+          cd target/aarch64-unknown-linux-musl/generate-rpm
+            rename 's/xunlei/xunlei-embed/' xunlei*.rpm
+            mv ./* $root/uploads/
+          cd -
+
+          ls -lah uploads
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         if: "startsWith(github.ref, 'refs/tags/')"
@@ -135,5 +299,5 @@ jobs:
 
       - name: Remove cached deb and RPM packages
         run: |
-          rm -rf target/${{ matrix.platform.target }}/debian
-          rm -rf target/${{ matrix.platform.target }}/generate-rpm
+          rm -rf target/x86_64-unknown-linux-gnu/debian
+          rm -rf target/x86_64-unknown-linux-gnu/generate-rpm
