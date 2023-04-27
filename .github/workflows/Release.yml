@@ -225,7 +225,7 @@ jobs:
             mv ./* $root/uploads/
           cd -
  
-          bash +x unpack.sh aarch64 && cargo zigbuild --release --target=aarch64-unknown-linux-gnu --no-default-features --features embed
+          arch=aarch64 bash +x unpack.sh && cargo zigbuild --release --target=aarch64-unknown-linux-gnu --no-default-features --features embed
           upx target/aarch64-unknown-linux-gnu/release/xunlei
           cargo deb --target=aarch64-unknown-linux-gnu --no-build --no-strip
           cargo generate-rpm --target=aarch64-unknown-linux-gnu --payload-compress none
@@ -284,7 +284,7 @@ jobs:
             mv ./* $root/uploads/
           cd -
  
-          bash +x unpack.sh aarch64 && cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features embed
+          arch=aarch64 bash +x unpack.sh && cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features embed
           upx target/aarch64-unknown-linux-musl/release/xunlei
           cargo deb --target=aarch64-unknown-linux-musl --no-build --no-strip
           cargo generate-rpm --target=aarch64-unknown-linux-musl --payload-compress none
