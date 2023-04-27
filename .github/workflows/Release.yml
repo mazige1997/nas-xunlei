@@ -20,56 +20,49 @@ jobs:
       matrix:
         embed: [false, true]
         platform:
-          - target: "x86_64-unknown-linux-gnu"
-            sub: x86_64
           - target: "x86_64-unknown-linux-musl"
             sub: x86_64
-          - target: "aarch64-unknown-linux-gnu"
-            sub: aarch64
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
-      image: docker://rust:latest
+      image: docker://ghcr.io/rust-cross/rust-musl-cross:${{ matrix.platform.target }}
       env:
         CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
-
     steps:
       - uses: actions/checkout@v3
-      - name: Init
-        run: |
-          rustup target add ${{ matrix.platform.target }}
-  
-      - name: Embed
-        shell: bash
-        run: |
-          if [ "${{ matrix.embed }}" == "true" ]; then
-            apt update && apt install wget -y
-            bash +x unpack.sh ${{ matrix.platform.sub }}
-          fi
-
+      - name: Build wheels - manylinux
+        uses: PyO3/maturin-action@main
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: auto
+          container: off
+          args: --release -o dist --strip
+          sccache: 'true'
+      - name: Build wheels - musllinux
+        if: matrix.platform.wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: musllinux_1_1
+          container: off
+          args: --release --out dist --strip
+          sccache: 'true'
       - name: Install cargo packages
-        shell: bash
-        run: |
-          cargo install cargo-deb cargo-generate-rpm
-
+        if: matrix.platform.deb
+        run: pip install cargo-deb cargo-generate-rpm
       - name: Build Debian package
-        shell: bash
-        run: |
-          if [ "${{ matrix.embed }}" == "true" ]; then
-              cargo deb -- --release --features=embed --target=${{ matrix.platform.target }}
-          else 
-              cargo deb -- --release --target=${{ matrix.platform.target }}
-          fi
-          
+        if: matrix.platform.deb
+        run: cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
       - name: Build RPM package
-        shell: bash
-        run: |
-          if [ "${{ matrix.embed }}" == "true" ]; then
-              cargo generate-rpm -- --release --features=embed --target=${{ matrix.platform.target }}
-          else 
-              cargo generate-rpm -- --release --target=${{ matrix.platform.target }}
-          fi
-
+        if: matrix.platform.deb
+        run: cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
+      - name: Upload wheels
+        if: matrix.platform.wheel
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
+          if-no-files-found: error
       - name: Install upx
         working-directory: /tmp
         env:
@@ -81,70 +74,54 @@ jobs:
           cd upx
           make
           cp build/release/upx /usr/local/bin/upx
-
       - name: Upx compress binary
-        run: upx target/${{ matrix.platform.target }}/release/xunlei
-
+        run: upx target/${{ matrix.platform.target }}/release/aliyundrive-webdav
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform.target }}-bin
-          path: target/${{ matrix.platform.target }}/release/xunlei
+          path: target/${{ matrix.platform.target }}/release/aliyundrive-webdav
           if-no-files-found: error
-
       - name: Upload deb artifacts
+        if: matrix.platform.deb
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform.target }}-deb
-          path: target/${{ matrix.platform.target }}/debian/xunlei_*.deb
+          path: target/${{ matrix.platform.target }}/debian/aliyundrive-webdav_*.deb
           if-no-files-found: error
-
       - name: Upload RPM artifacts
+        if: matrix.platform.deb
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform.target }}-rpm
-          path: target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
+          path: target/${{ matrix.platform.target }}/generate-rpm/aliyundrive-webdav*.rpm
           if-no-files-found: error
-
       - name: Get tag
         if: "startsWith(github.ref, 'refs/tags/')"
         id: tag
         uses: dawidd6/action-get-tag@v1
-        
+        with:
+          # Optionally strip `v` prefix
+          strip_v: true
       - name: Archive binary
         if: "startsWith(github.ref, 'refs/tags/')"
-        shell: bash
         run: |
           cd target/${{ matrix.platform.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256
+          tar czvf aliyundrive-webdav-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz aliyundrive-webdav
+          shasum -a 256 aliyundrive-webdav-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > aliyundrive-webdav-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
           cd -
-
-          cd target/${{ matrix.platform.target }}/debian
-          for file in ./*.deb; do
-            mv "$file" "${file/.deb/-embed.deb}"
-          done 
-          cd -
-
-          cd target/${{ matrix.platform.target }}/generate-rpm
-          for file in ./*.rpm; do
-            mv "$file" "${file/.rpm/-embed.rpm}"
-          done 
-          cd -
-
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         if: "startsWith(github.ref, 'refs/tags/')"
         with:
-          token: ${{ secrets.TOKEN }}
           files: |
-            target/${{ matrix.platform.target }}/release/xunlei*.tar.gz*
-            target/${{ matrix.platform.target }}/debian/xunlei_*.deb
-            target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
+            target/${{ matrix.platform.target }}/release/aliyundrive-webdav*.tar.gz*
+            target/${{ matrix.platform.target }}/debian/aliyundrive-webdav_*.deb
+            target/${{ matrix.platform.target }}/generate-rpm/aliyundrive-webdav*.rpm
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
           generate_release_notes: true
-
       - name: Remove cached deb and RPM packages
+        if: matrix.platform.deb
         run: |
           rm -rf target/${{ matrix.platform.target }}/debian
           rm -rf target/${{ matrix.platform.target }}/generate-rpm

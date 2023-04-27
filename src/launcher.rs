@@ -7,14 +7,14 @@ use std::{
     process::Stdio,
 };
 
-pub struct XunleiDaemon {
+pub struct XunleiLauncher {
     internal: bool,
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,
 }
 
-impl From<Config> for XunleiDaemon {
+impl From<Config> for XunleiLauncher {
     fn from(config: Config) -> Self {
         Self {
             internal: config.internal,
@@ -25,7 +25,7 @@ impl From<Config> for XunleiDaemon {
     }
 }
 
-impl XunleiDaemon {
+impl XunleiLauncher {
     fn run_backend(envs: HashMap<String, String>) -> anyhow::Result<std::process::Child> {
         log::info!("[XunleiDaemon] Start Xunlei Engine");
         standard::create_dir_all(&Path::new(standard::SYNOPKG_VAR), 0o755)?;
@@ -229,11 +229,11 @@ impl XunleiDaemon {
     }
 }
 
-impl Running for XunleiDaemon {
+impl Running for XunleiLauncher {
     fn execute(&self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
         let envs = self.envs();
-        let mut backend_process = XunleiDaemon::run_backend(envs.clone())?;
+        let mut backend_process = XunleiLauncher::run_backend(envs.clone())?;
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
             .spawn(move || {
@@ -251,7 +251,7 @@ impl Running for XunleiDaemon {
         let ui_thread: JoinHandle<_> = Builder::new()
             .name("ui".to_string())
             .spawn(move || {
-                XunleiDaemon::run_ui(internal, port, envs);
+                XunleiLauncher::run_ui(internal, port, envs);
             })
             .expect("Failed to start ui thread");
 

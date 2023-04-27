@@ -24,7 +24,10 @@ rouille= "3.6.2"
 clap = { version = "4.0.18", features = ["derive"] }
 
 [features]
-embed = []
+default = ["launcher", "systemd"]
+embed = ["launcher", "systemd"]
+launcher = []
+systemd = []
 
 [[bin]]
 name = "xunlei"
