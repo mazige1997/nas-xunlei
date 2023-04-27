@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: docker://ghcr.io/messense/cargo-zigbuild:latest
-
     steps:
       - uses: actions/checkout@v3
       
@@ -48,7 +47,6 @@ jobs:
           cargo generate-rpm --payload-compress none
 
           cargo zigbuild --release --no-default-features --features embed
-          
           cargo deb --no-build --no-strip
           cargo generate-rpm --payload-compress none
           
