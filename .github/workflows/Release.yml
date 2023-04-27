@@ -33,10 +33,10 @@ jobs:
         features:
           - target: "x86_64-unknown-linux-gnu"
             sub: x86_64
-          - target: "aarch64-unknown-linux-gnu"
-            sub: aarch64
           - target: "x86_64-unknown-linux-musl"
             sub: x86_64
+          - target: "aarch64-unknown-linux-gnu"
+            sub: aarch64
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
@@ -93,7 +93,7 @@ jobs:
           shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-launch.tar.gz.sha256
           cd -
  
-          bash +x unpack.sh && cargo zigbuild --release --target=${{ matrix.features.target }} --no-default-features --features embed
+          bash +x unpack.sh ${{ matrix.features.target.sub }} && cargo zigbuild --release --target=${{ matrix.features.target }} --no-default-features --features embed
           upx target/${{ matrix.features.target }}/release/xunlei
           cargo deb --target=${{ matrix.features.target }} --no-build --no-strip
           cargo generate-rpm --target=${{ matrix.features.target }} --payload-compress none
