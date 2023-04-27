@@ -59,12 +59,14 @@ jobs:
           cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
           mv target/x86_64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}/
           tar -cf - nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }} | xz -9 -c - > nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}.tar.xz
+          mv nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}.tar.xz uploads/
 
           bash +x unpack.sh aarch64
           mv bin nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
           mv target/aarch64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/
           tar -cf - nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }} | xz -9 -c - > nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}.tar.xz
+          mv nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}.tar.xz uploads/
 
 
       - name: Build x86_64-unknown-linux-gnu package
