@@ -230,7 +230,7 @@ impl XunleiLauncher {
 }
 
 impl Running for XunleiLauncher {
-    fn execute(&self) -> anyhow::Result<()> {
+    fn launch(&self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
         let envs = self.envs();
         let mut backend_process = XunleiLauncher::run_backend(envs.clone())?;

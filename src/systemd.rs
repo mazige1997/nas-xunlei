@@ -192,7 +192,7 @@ impl XunleiInstall {
         Ok(std::env::current_exe()?)
     }
 
-    fn systemd(&self, execute: PathBuf) -> anyhow::Result<()> {
+    fn systemd(&self, launch: PathBuf) -> anyhow::Result<()> {
         if Systemd::support().not() {
             return Ok(());
         }
@@ -205,7 +205,7 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart={} execute {} -p {} -d {} -c {}
+                ExecStart={} launch {} -p {} -d {} -c {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
@@ -213,7 +213,7 @@ impl XunleiInstall {
                 [Install]
                 WantedBy=multi-user.target"#,
             self.description,
-            execute.display(),
+            launch.display(),
             internal,
             self.port,
             self.download_path.display(),
@@ -235,7 +235,7 @@ impl XunleiInstall {
 }
 
 impl Running for XunleiInstall {
-    fn execute(&self) -> anyhow::Result<()> {
+    fn launch(&self) -> anyhow::Result<()> {
         self.config()?;
         self.systemd(self.install()?)
     }
@@ -263,7 +263,7 @@ impl XunleiUninstall {
 }
 
 impl Running for XunleiUninstall {
-    fn execute(&self) -> anyhow::Result<()> {
+    fn launch(&self) -> anyhow::Result<()> {
         if Systemd::support() {
             Systemd::systemctl(["disable", standard::APP_NAME])?;
             Systemd::systemctl(["stop", standard::APP_NAME])?;

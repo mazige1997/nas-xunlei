@@ -13,7 +13,7 @@ Usage: xunlei [OPTIONS] <COMMAND>
 Commands:
   install    Install xunlei
   uninstall  Uninstall xunlei
-  execute    Execute xunlei
+  launch     Launch xunlei
   help       Print this message or the help of the given subcommand(s)
 
 Options:
@@ -34,10 +34,10 @@ Options:
   -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /tmp/downloads]
   -h, --help                           Print help
 
-❯ ./xunlei execute --help
-Execute xunlei
+❯ ./xunlei launch --help
+Launch xunlei
 
-Usage: xunlei execute [OPTIONS]
+Usage: xunlei launch [OPTIONS]
 
 Options:
   -d, --debug                          Enable debug mode
@@ -63,5 +63,5 @@ bash +x ./unpack.sh && cargo build --release --features embed && mv target/relea
 # 执行安装
 ./xunlei install
 # 若系统不支持systemctl，则手动启动daemon
-./xunlei exectute
+./xunlei launch
 ```
