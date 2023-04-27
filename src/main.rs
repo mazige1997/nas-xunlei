@@ -56,15 +56,15 @@ fn main() -> anyhow::Result<()> {
     match opt.commands {
         #[cfg(feature = "systemd")]
         Commands::Install(config) => {
-            systemd::XunleiInstall::from(config).execute()?;
+            systemd::XunleiInstall::from(config).launch()?;
         }
         #[cfg(feature = "systemd")]
         Commands::Uninstall => {
-            systemd::XunleiUninstall {}.execute()?;
+            systemd::XunleiUninstall {}.launch()?;
         }
         #[cfg(feature = "launch")]
         Commands::Launch(config) => {
-            launch::XunleiLauncher::from(config).execute()?;
+            launch::XunleiLauncher::from(config).launch()?;
         }
     }
     Ok(())
@@ -107,5 +107,5 @@ pub(crate) fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
 }
 
 pub trait Running {
-    fn execute(&self) -> anyhow::Result<()>;
+    fn launch(&self) -> anyhow::Result<()>;
 }
