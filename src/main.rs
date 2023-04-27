@@ -1,5 +1,7 @@
-pub mod daemon;
+#[cfg(feature = "launch")]
+pub mod launch;
 pub mod standard;
+#[cfg(feature = "systemd")]
 pub mod systemd;
 pub mod xunlei_asset;
 use std::io::Write;
@@ -21,12 +23,15 @@ struct Opt {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    #[cfg(feature = "systemd")]
     /// Install xunlei
     Install(Config),
+    #[cfg(feature = "systemd")]
     /// Uninstall xunlei
     Uninstall,
-    /// Execute xunlei
-    Execute(Config),
+    #[cfg(feature = "launch")]
+    /// Launch xunlei
+    Launch(Config),
 }
 
 #[derive(Args)]
@@ -49,14 +54,17 @@ fn main() -> anyhow::Result<()> {
     let opt = Opt::parse();
     init_log(opt.debug);
     match opt.commands {
+        #[cfg(feature = "systemd")]
         Commands::Install(config) => {
             systemd::XunleiInstall::from(config).execute()?;
         }
+        #[cfg(feature = "systemd")]
         Commands::Uninstall => {
             systemd::XunleiUninstall {}.execute()?;
         }
-        Commands::Execute(config) => {
-            daemon::XunleiDaemon::from(config).execute()?;
+        #[cfg(feature = "launch")]
+        Commands::Launch(config) => {
+            launch::XunleiLauncher::from(config).execute()?;
         }
     }
     Ok(())

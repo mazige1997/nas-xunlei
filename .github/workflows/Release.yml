@@ -18,7 +18,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        embed: [false, true]
         platform:
           - target: "x86_64-unknown-linux-gnu"
             sub: x86_64
@@ -29,61 +28,62 @@ jobs:
           - target: "aarch64-unknown-linux-musl"
             sub: aarch64
     container:
-      image: docker://rust:latest
-      env:
-        CFLAGS_armv7_unknown_linux_musleabihf: '-mfpu=vfpv3-d16'
+      image: docker://messense/cargo-zigbuild:latest
 
     steps:
       - uses: actions/checkout@v3
-      - name: Init
-        run: |
-          rustup target add ${{ matrix.platform.target }}
-  
-      - name: Embed
-        shell: bash
-        run: |
-          if [ "${{ matrix.embed }}" == "true" ]; then
-            apt update && apt install wget -y
-            bash +x unpack.sh ${{ matrix.platform.sub }}
-          fi
-
+      
       - name: Install cargo packages
-        shell: bash
-        run: |
-          cargo install cargo-deb cargo-generate-rpm
-
-      - name: Build Debian package
-        shell: bash
-        run: |
-          if [ "${{ matrix.embed }}" == "true" ]; then
-              cargo deb -- --release --features=embed --target=${{ matrix.platform.target }}
-          else 
-              cargo deb -- --release --target=${{ matrix.platform.target }}
-          fi
-          
-      - name: Build RPM package
-        shell: bash
-        run: |
-          if [ "${{ matrix.embed }}" == "true" ]; then
-              cargo generate-rpm -- --release --features=embed --target=${{ matrix.platform.target }}
-          else 
-              cargo generate-rpm -- --release --target=${{ matrix.platform.target }}
-          fi
+        run: cargo install cargo-deb cargo-generate-rpm
 
       - name: Install upx
-        working-directory: /tmp
-        env:
-          CC: clang
-          CXX: clang++
         run: |
-          set -ex
-          git clone --recursive https://github.com/upx/upx.git
-          cd upx
-          make
-          cp build/release/upx /usr/local/bin/upx
+          apt update && apt install upx -y
 
-      - name: Upx compress binary
-        run: upx target/${{ matrix.platform.target }}/release/xunlei
+      - name: Get tag
+        if: "startsWith(github.ref, 'refs/tags/')"
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+        with:
+          # Optionally strip `v` prefix
+          strip_v: true
+          
+      - name: Build package
+        shell: bash
+        run: |
+          cargo zigbuild --release --target=${{ matrix.platform.target }}
+          upx target/${{ matrix.platform.target }}/release/xunlei
+          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
+
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
+          cd -
+
+          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features launch
+          upx target/${{ matrix.platform.target }}/release/xunlei
+          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
+
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.deb target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-launch_arm64.deb
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.rpm target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-launch_arm64.rpm
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz.sha256
+          cd -
+ 
+          bash +x unpack.sh ${{ matrix.platform.target.sub }} && cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-features --features embed
+          upx target/${{ matrix.platform.target }}/release/xunlei
+          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
+
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.deb target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-embed_arm64.deb
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.rpm target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-embed_arm64.rpm
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256
+          cd -
 
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v3
@@ -106,37 +106,18 @@ jobs:
           path: target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
           if-no-files-found: error
 
-      - name: Get tag
-        if: "startsWith(github.ref, 'refs/tags/')"
-        id: tag
-        uses: dawidd6/action-get-tag@v1
-        
       - name: Archive binary
         if: "startsWith(github.ref, 'refs/tags/')"
-        shell: bash
         run: |
           cd target/${{ matrix.platform.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256
-          cd -
-
-          cd target/${{ matrix.platform.target }}/debian
-          for file in ./*.deb; do
-            mv "$file" "${file/.deb/-embed.deb}"
-          done 
-          cd -
-
-          cd target/${{ matrix.platform.target }}/generate-rpm
-          for file in ./*.rpm; do
-            mv "$file" "${file/.rpm/-embed.rpm}"
-          done 
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
           cd -
 
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         if: "startsWith(github.ref, 'refs/tags/')"
         with:
-          token: ${{ secrets.TOKEN }}
           files: |
             target/${{ matrix.platform.target }}/release/xunlei*.tar.gz*
             target/${{ matrix.platform.target }}/debian/xunlei_*.deb
