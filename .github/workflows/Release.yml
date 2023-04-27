@@ -37,16 +37,8 @@ jobs:
         run: cargo install cargo-deb cargo-generate-rpm
 
       - name: Install upx
-        working-directory: /tmp
-        env:
-          CC: clang
-          CXX: clang++
         run: |
-          set -ex
-          git clone --recursive https://github.com/upx/upx.git
-          cd upx
-          make
-          cp build/release/upx /usr/local/bin/upx
+          apt update && apt install upx -y
 
       - name: Get tag
         if: "startsWith(github.ref, 'refs/tags/')"
