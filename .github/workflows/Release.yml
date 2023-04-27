@@ -18,7 +18,7 @@ jobs:
     # strategy:
     #   fail-fast: false
     #   matrix:
-    #     features:
+    #     platform:
     #       - target: "x86_64-unknown-linux-gnu"
     #         sub: x86_64
     #       - target: "aarch64-unknown-linux-gnu"
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features:
+        platform:
           - target: "x86_64-unknown-linux-gnu"
             sub: x86_64
           - target: "x86_64-unknown-linux-musl"
@@ -71,67 +71,67 @@ jobs:
       - name: Build package
         shell: bash
         run: |
-          cargo zigbuild --release --target=${{ matrix.features.target }}
-          upx target/${{ matrix.features.target }}/release/xunlei
-          cargo deb --target=${{ matrix.features.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.features.target }} --payload-compress none
+          cargo zigbuild --release --target=${{ matrix.platform.target }}
+          upx target/${{ matrix.platform.target }}/release/xunlei
+          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
 
-          cd target/${{ matrix.features.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}.tar.gz.sha256
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
           cd -
 
-          cargo zigbuild --release --target=${{ matrix.features.target }} --no-default-features --features launch
-          upx target/${{ matrix.features.target }}/release/xunlei
-          cargo deb --target=${{ matrix.features.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.features.target }} --payload-compress none
+          cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-platform --platform launch
+          upx target/${{ matrix.platform.target }}/release/xunlei
+          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
 
-          mv target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.deb target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-launch_arm64.deb
-          mv target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.rpm target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-launch_arm64.rpm
-          cd target/${{ matrix.features.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-launch.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-launch.tar.gz.sha256
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.deb target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-launch_arm64.deb
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.rpm target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-launch_arm64.rpm
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-launch.tar.gz.sha256
           cd -
  
-          bash +x unpack.sh ${{ matrix.features.target.sub }} && cargo zigbuild --release --target=${{ matrix.features.target }} --no-default-features --features embed
-          upx target/${{ matrix.features.target }}/release/xunlei
-          cargo deb --target=${{ matrix.features.target }} --no-build --no-strip
-          cargo generate-rpm --target=${{ matrix.features.target }} --payload-compress none
+          bash +x unpack.sh ${{ matrix.platform.target.sub }} && cargo zigbuild --release --target=${{ matrix.platform.target }} --no-default-platform --platform embed
+          upx target/${{ matrix.platform.target }}/release/xunlei
+          cargo deb --target=${{ matrix.platform.target }} --no-build --no-strip
+          cargo generate-rpm --target=${{ matrix.platform.target }} --payload-compress none
 
-          mv target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.deb target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-embed_arm64.deb
-          mv target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.rpm target/${{ matrix.features.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-embed_arm64.rpm
-          cd target/${{ matrix.features.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-embed.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}-embed.tar.gz.sha256
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.deb target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-embed_arm64.deb
+          mv target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}_arm64.rpm target/${{ matrix.platform.target }}/debian/xunlei_${{ steps.tag.outputs.tag }}-embed_arm64.rpm
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}-embed.tar.gz.sha256
           cd -
 
       - name: Upload binary artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.features.target }}-bin
-          path: target/${{ matrix.features.target }}/release/xunlei
+          name: ${{ matrix.platform.target }}-bin
+          path: target/${{ matrix.platform.target }}/release/xunlei
           if-no-files-found: error
 
       - name: Upload deb artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.features.target }}-deb
-          path: target/${{ matrix.features.target }}/debian/xunlei_*.deb
+          name: ${{ matrix.platform.target }}-deb
+          path: target/${{ matrix.platform.target }}/debian/xunlei_*.deb
           if-no-files-found: error
 
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.features.target }}-rpm
-          path: target/${{ matrix.features.target }}/generate-rpm/xunlei*.rpm
+          name: ${{ matrix.platform.target }}-rpm
+          path: target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
           if-no-files-found: error
 
       - name: Archive binary
         if: "startsWith(github.ref, 'refs/tags/')"
         run: |
-          cd target/${{ matrix.features.target }}/release
-          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}.tar.gz xunlei
-          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.features.target }}.tar.gz.sha256
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz xunlei
+          shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.${{ matrix.platform.target }}.tar.gz.sha256
           cd -
 
       - name: Upload binaries to GitHub Release
@@ -139,13 +139,13 @@ jobs:
         if: "startsWith(github.ref, 'refs/tags/')"
         with:
           files: |
-            target/${{ matrix.features.target }}/release/xunlei*.tar.gz*
-            target/${{ matrix.features.target }}/debian/xunlei_*.deb
-            target/${{ matrix.features.target }}/generate-rpm/xunlei*.rpm
+            target/${{ matrix.platform.target }}/release/xunlei*.tar.gz*
+            target/${{ matrix.platform.target }}/debian/xunlei_*.deb
+            target/${{ matrix.platform.target }}/generate-rpm/xunlei*.rpm
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
           generate_release_notes: true
 
       - name: Remove cached deb and RPM packages
         run: |
-          rm -rf target/${{ matrix.features.target }}/debian
-          rm -rf target/${{ matrix.features.target }}/generate-rpm
+          rm -rf target/${{ matrix.platform.target }}/debian
+          rm -rf target/${{ matrix.platform.target }}/generate-rpm
