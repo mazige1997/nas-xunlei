@@ -27,6 +27,7 @@ jobs:
       - name: Install depends
         run: |
           apt update && apt install upx rename wget -y
+          mkdir uploads
 
       - name: Get tag
         if: "startsWith(github.ref, 'refs/tags/')"
@@ -41,10 +42,13 @@ jobs:
           cargo zigbuild --release
           cargo deb --no-build --no-strip
           cargo generate-rpm --payload-compress none
+
           cargo zigbuild --no-default-features --features launch
-          cargo deb--no-build --no-strip
+          cargo deb --no-build --no-strip
           cargo generate-rpm --payload-compress none
+
           cargo zigbuild --release --no-default-features --features embed
+          
           cargo deb --no-build --no-strip
           cargo generate-rpm --payload-compress none
           
@@ -53,7 +57,6 @@ jobs:
         shell: bash
         run: |
           root=$(pwd)
-          mkdir uploads
 
           cargo zigbuild --release --target=x86_64-unknown-linux-gnu
           upx target/x86_64-unknown-linux-gnu/release/xunlei
@@ -113,7 +116,6 @@ jobs:
         shell: bash
         run: |
           root=$(pwd)
-          mkdir uploads
 
           cargo zigbuild --release --target=x86_64-unknown-linux-musl
           upx target/x86_64-unknown-linux-musl/release/xunlei
@@ -173,7 +175,6 @@ jobs:
         shell: bash
         run: |
           root=$(pwd)
-          mkdir uploads
 
           cargo zigbuild --release --target=aarch64-unknown-linux-gnu
           upx target/aarch64-unknown-linux-gnu/release/xunlei
@@ -233,7 +234,6 @@ jobs:
         shell: bash
         run: |
           root=$(pwd)
-          mkdir uploads
 
           cargo zigbuild --release --target=aarch64-unknown-linux-musl
           upx target/aarch64-unknown-linux-musl/release/xunlei
@@ -287,6 +287,7 @@ jobs:
           cd -
 
           ls -lah uploads
+
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         if: "startsWith(github.ref, 'refs/tags/')"
