@@ -15,18 +15,6 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
-    # strategy:
-    #   fail-fast: false
-    #   matrix:
-    #     platform:
-    #       - target: "x86_64-unknown-linux-gnu"
-    #         sub: x86_64
-    #       - target: "aarch64-unknown-linux-gnu"
-    #         sub: aarch64
-    #       - target: "x86_64-unknown-linux-musl"
-    #         sub: x86_64
-    #       - target: "aarch64-unknown-linux-musl"
-    #         sub: aarch64
     strategy:
       fail-fast: false
       matrix:
