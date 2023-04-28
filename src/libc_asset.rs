@@ -28,6 +28,10 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         let target_file = libc_path.join(filename);
         crate::standard::write_file(&target_file, file.data, 0o755)?;
     }
+    let ld_path = std::path::Path::new(LD_PATH).join(LD);
+    if ld_path.exists() {
+        std::fs::remove_file(&ld_path)?;
+    }
     unsafe {
         let source_path = std::ffi::CString::new(
             std::path::Path::new(LD_LIBRARY_PATH)
@@ -35,8 +39,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 .display()
                 .to_string(),
         )?;
-        let target_path =
-            std::ffi::CString::new(std::path::Path::new(LD_PATH).join(LD).display().to_string())?;
+        let target_path = std::ffi::CString::new(ld_path.display().to_string())?;
         if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
             anyhow::bail!(std::io::Error::last_os_error());
         }
