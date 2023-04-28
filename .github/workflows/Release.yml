@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           root=$(pwd)
-          target_list=($target x86_64-unknown-linux-musl aarch64-unknown-linux-gnu aarch64-unknown-linux-musl)
+          target_list=(x86_64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-unknown-linux-gnu aarch64-unknown-linux-musl)
           for target in ${target_list[@]}
           do
           cargo zigbuild --release --target=$target
@@ -96,7 +96,7 @@ jobs:
           cargo deb --target=$target --no-build --no-strip
           cargo generate-rpm --target=$target --payload-compress none
           cd target/$target/release
-            tar czvf xunlei-${{ steps.tag.outputs.tag }}.$target-launch.tar.gz xunlei
+            tar czvf xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz xunlei
             shasum -a 256 xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz > xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256
             mv xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz $root/uploads/
             mv xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256 $root/uploads/
@@ -119,7 +119,7 @@ jobs:
           cargo deb --target=$target --no-build --no-strip
           cargo generate-rpm --target=$target --payload-compress none
           cd target/$target/release
-            tar czvf xunlei-${{ steps.tag.outputs.tag }}.$target-embed.tar.gz xunlei
+            tar czvf xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz xunlei
             shasum -a 256 xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz > xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256
             mv xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz $root/uploads/
             mv xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256 $root/uploads/
