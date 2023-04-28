@@ -64,8 +64,8 @@ jobs:
           mv nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}.tar.xz uploads/
 
           arch=aarch64 bash +x unpack.sh
-          mkdir -p nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}/bin
-          mv bin/* nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}/bin/
+          mkdir -p nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/bin
+          mv bin/* nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/bin/
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
           mv target/aarch64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/
           tar -cf - nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }} | xz -9 -c - > nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}.tar.xz
