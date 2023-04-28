@@ -1,11 +1,11 @@
 #[cfg(target_arch = "x86_64")]
 #[derive(rust_embed::RustEmbed)]
-#[folder = "libc/x86_64"]
+#[folder = "libc/x86_64/"]
 struct Asset;
 
 #[cfg(target_arch = "aarch64")]
 #[derive(rust_embed::RustEmbed)]
-#[folder = "libc/aarch64"]
+#[folder = "libc/aarch64/"]
 struct Asset;
 
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
