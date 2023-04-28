@@ -32,7 +32,6 @@ jobs:
         id: tag
         uses: dawidd6/action-get-tag@v1
         with:
-          # Optionally strip `v` prefix
           strip_v: true
 
       - name: Prebuild package
@@ -90,25 +89,6 @@ jobs:
           cd -
           mv target/$target/debian/* $root/uploads/
           mv target/$target/generate-rpm/* $root/uploads/
-
-          cargo zigbuild --release --target=$target --no-default-features --features launch
-          upx target/$target/release/xunlei
-          cargo deb --target=$target --no-build --no-strip
-          cargo generate-rpm --target=$target --payload-compress none
-          cd target/$target/release
-            tar czvf xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz xunlei
-            shasum -a 256 xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz > xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256
-            mv xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz $root/uploads/
-            mv xunlei-launch-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256 $root/uploads/
-          cd -
-          cd target/$target/debian
-            rename 's/xunlei/xunlei-launch/' xunlei*.deb
-            mv ./* $root/uploads/
-          cd -
-          cd target/$target/generate-rpm
-            rename 's/xunlei/xunlei-launch/' xunlei*.rpm
-            mv ./* $root/uploads/
-          cd -
 
           if [[ $target == *"aarch64"* ]]; then
               arch=aarch64 bash +x unpack.sh && cargo zigbuild --release --target=$target --no-default-features --features embed
