@@ -1,14 +1,17 @@
 #[cfg(feature = "launch")]
 pub mod launch;
+#[cfg(all(target_os = "linux", target_env = "musl"))]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+pub mod libc_asset;
 pub mod standard;
 #[cfg(feature = "systemd")]
 pub mod systemd;
+#[cfg(feature = "systemd")]
 pub mod xunlei_asset;
-use std::io::Write;
-
-use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
+use std::io::Write;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
