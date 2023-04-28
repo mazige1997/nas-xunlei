@@ -28,7 +28,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=nas-xunlei
-  DEPENDS:=@(aarch64||x86_64) @USE_MUSL +libc6-compat +libgcc +libstdcpp
+  DEPENDS:=@(aarch64||x86_64) @USE_MUSL +libgcc +libstdcpp
   URL:=https://nas.xunlei.com/
 endef
 
