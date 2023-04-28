@@ -38,7 +38,7 @@ endef
 
 define Package/$(PKG_NAME)/postrm
 #!/bin/sh
-  rm -rf /usr/share/xunlei
+  rm -rf /var/packages/pan-xunlei-com
   exit 0
 endef
 
