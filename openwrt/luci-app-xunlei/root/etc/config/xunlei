@@ -1,0 +1,7 @@
+
+config xunlei
+	option 'enabled' '0'
+	option 'internal' '1'
+	option 'port' '5055'
+	option 'download_path' '/tmp/downloads'
+	option 'config_path' '/var/packages/pan-xunlei-com'
