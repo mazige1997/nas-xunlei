@@ -162,7 +162,7 @@ impl XunleiLauncher {
         });
     }
 
-    fn envs(&self) -> HashMap<String, String> {
+    fn envs(&self) -> anyhow::Result<HashMap<String, String>> {
         let mut envs = HashMap::new();
         envs.insert(
             String::from("DriveListen"),
@@ -229,14 +229,14 @@ impl XunleiLauncher {
         #[cfg(all(target_os = "linux", target_env = "musl"))]
         #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
         crate::libc_asset::ld_env(&mut envs)?;
-        envs
+        Ok(envs)
     }
 }
 
 impl Running for XunleiLauncher {
     fn launch(&self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
-        let envs = self.envs();
+        let envs = self.envs()?;
         let mut backend_process = XunleiLauncher::run_backend(envs.clone())?;
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
