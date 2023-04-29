@@ -36,6 +36,9 @@ jobs:
 
       - name: Tag Check
         run: |
+          echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_ENV
+          echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
+          git config --global --add safe.directory /__w/nas-xunlei/nas-xunlei/ --force
           if [ -z "${{ steps.tag.outputs.tag }}" ]; then
             echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
             echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_OUTPUT
