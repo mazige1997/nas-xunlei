@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=nas-xunlei
-  DEPENDS:=@(aarch64||x86_64) @USE_MUSL +libgcc +libstdcpp
+  DEPENDS:=@(aarch64||x86_64) @USE_MUSL
   URL:=https://nas.xunlei.com/
 endef
 
@@ -60,26 +60,24 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/postrm
-  #!/bin/sh
-  rm -rf /var/packages/pan-xunlei-com
-  exit 0
+	#!/bin/sh
+	rm -rf /var/packages/pan-xunlei-com
+	exit 0
 endef
 
 define Package/$(PKG_NAME)/install
- 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target
+	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host
 	$(CP) $(PKG_BUILD_DIR)/bin $(1)/var/packages/pan-xunlei-com/target/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xunlei $(1)/var/packages/pan-xunlei-com/xunlei
-
 	$(INSTALL_DIR) $(1)/usr/syno/synoman/webman/modules
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/etc
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules
- 	$(INSTALL_BIN) $(CURDIR)/files/sysinfo.conf $(1)/var/packages/pan-xunlei-com/target/host/etc/sysinfo.conf
-  	echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > $(1)/var/packages/pan-xunlei-com/target/host/etc/sysinfo.conf
-  	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modulesauthenticate.cgi
-
+	$(INSTALL_BIN) $(CURDIR)/files/sysinfo.conf $(1)/var/packages/pan-xunlei-com/target/host/etc/sysinfo.conf
+	echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > $(1)/var/packages/pan-xunlei-com/target/host/etc/sysinfo.conf
+	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modulesauthenticate.cgi
 	$(INSTALL_DIR) $(1)/etc/init.d
-  	$(INSTALL_BIN) $(CURDIR)/files/xunlei.init $(1)/etc/init.d/xunlei
+	$(INSTALL_BIN) $(CURDIR)/files/xunlei.init $(1)/etc/init.d/xunlei
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/xunlei.config $(1)/etc/config/xunlei
 endef

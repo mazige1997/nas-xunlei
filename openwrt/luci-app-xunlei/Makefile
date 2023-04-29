@@ -22,12 +22,6 @@ define Package/$(PKG_NAME)/postinst
 }
 endef
 
-define Package/$(PKG_NAME)/postrm
-#!/bin/sh
-  rm -rf /var/packages/pan-xunlei-com
-  exit 0
-endef
-
 include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
