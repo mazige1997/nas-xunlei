@@ -11,13 +11,8 @@ PKG_RELEASE:=1
 
 LUCI_TITLE:=LuCI support for NAS-Xunlei
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+nas-xunlei
-PKG_MAINTAINER:=sbwml <admin@cooluc.com>
-
-define Package/$(PKG_NAME)/conffiles
-/etc/xunlei
-/etc/synoinfo.conf
-endef
+LUCI_DEPENDS:=+gngpp
+PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh

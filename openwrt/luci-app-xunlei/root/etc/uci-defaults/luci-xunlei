@@ -7,7 +7,5 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-[ ! -f /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf ] && echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
-[ ! -f /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi ] && echo -e '#!/usr/bin/env sh\necho OK' > /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
 rm -rf /tmp/luci-*
 exit 0

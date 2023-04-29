@@ -64,22 +64,22 @@ jobs:
           arch=x86_64 bash +x unpack.sh
           mkdir -p nas-xunlei-openwrt-x86_64-${{ env.tag }}/bin
           mv bin/* nas-xunlei-openwrt-x86_64-${{ env.tag }}/bin/
-          echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > nas-xunlei-openwrt-x86_64-${{ env.tag }}/synoinfo.conf
-          echo -e '#!/usr/bin/env sh\necho OK' > nas-xunlei-openwrt-x86_64-${{ env.tag }}/authenticate.cgi
           cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
           mv target/x86_64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-x86_64-${{ env.tag }}/
           tar -cf - nas-xunlei-openwrt-x86_64-${{ env.tag }} | xz -9 -c - > nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz
+          shasum -a 256 nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz > nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz.sha256
           mv nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz uploads/
+          mv nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz.sha256 uploads/
 
           arch=aarch64 bash +x unpack.sh
           mkdir -p nas-xunlei-openwrt-aarch64-${{ env.tag }}/bin
           mv bin/* nas-xunlei-openwrt-aarch64-${{ env.tag }}/bin/
-          echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > nas-xunlei-openwrt-aarch64-${{ env.tag }}/synoinfo.conf
-          echo -e '#!/usr/bin/env sh\necho OK' > nas-xunlei-openwrt-aarch64-${{ env.tag }}/authenticate.cgi
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
           mv target/aarch64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-aarch64-${{ env.tag }}/
           tar -cf - nas-xunlei-openwrt-aarch64-${{ env.tag }} | xz -9 -c - > nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz
+          shasum -a 256 nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz > nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz.sha256
           mv nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz uploads/
+          mv nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz.sha256 uploads/
 
       - name: Build package
         if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
