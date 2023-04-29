@@ -22,19 +22,6 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 
-❯ ./xunlei install --help
-Install xunlei
-
-Usage: xunlei install [OPTIONS]
-
-Options:
-  -d, --debug                          Enable debug mode
-  -i, --internal                       Xunlei internal mode
-  -p, --port <PORT>                    Xunlei web-ui port [default: 5055]
-  -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /var/packages/pan-xunlei-com]
-  -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /tmp/downloads]
-  -h, --help                           Print help
-
 ```
 
 ### 自行编译
