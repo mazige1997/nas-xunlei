@@ -129,11 +129,11 @@ jobs:
           ls -lah uploads
           done
 
-      - name: Upload deb artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: uploads
-          path: uploads/*
+          path: uploads/
           if-no-files-found: error
           
       - name: Upload binaries to GitHub Release
