@@ -9,16 +9,19 @@ struct Asset;
 struct Asset;
 
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
+    use crate::standard;
     use anyhow::Context;
+    use std::ffi::CString;
+    use std::path::Path;
+
     #[cfg(target_arch = "x86_64")]
     const LD: &str = "ld-linux-x86-64.so.2";
     #[cfg(target_arch = "aarch64")]
     const LD: &str = "ld-linux-aarch64.so.1";
-    const LD_PATH: &str = "/lib";
-    const LD_LIBRARY_PATH: &str = "/tmp/libc";
-    let libc_path = std::path::Path::new(LD_LIBRARY_PATH);
+
+    let libc_path = std::path::Path::new(standard::SYNOPKG_LIB);
     if !libc_path.exists() {
-        crate::standard::create_dir_all(libc_path, 0o755)?;
+        standard::create_dir_all(libc_path, 0o755)?;
     }
     for filename in Asset::iter()
         .map(|v| v.into_owned())
@@ -26,24 +29,24 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     {
         let file = Asset::get(&filename).context("Failed to get bin asset")?;
         let target_file = libc_path.join(filename);
-        crate::standard::write_file(&target_file, file.data, 0o755)?;
-    }
-    let ld_path = std::path::Path::new(LD_PATH).join(LD);
-    if ld_path.exists() {
-        std::fs::remove_file(&ld_path)?;
-    }
-    unsafe {
-        let source_path = std::ffi::CString::new(
-            std::path::Path::new(LD_LIBRARY_PATH)
-                .join(LD)
-                .display()
-                .to_string(),
-        )?;
-        let target_path = std::ffi::CString::new(ld_path.display().to_string())?;
-        if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
-            anyhow::bail!(std::io::Error::last_os_error());
+        if !target_file.exists() {
+            standard::write_file(&target_file, file.data, 0o755)?;
         }
     }
-    envs.insert(String::from("LD_LIBRARY_PATH"), LD_LIBRARY_PATH.to_string());
+    let sys_ld = Path::new(standard::SYS_LIB).join(LD);
+    let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
+    if !sys_ld.exists() {
+        unsafe {
+            let source_path = CString::new(syno_ld.display().to_string())?;
+            let target_path = CString::new(sys_ld.display().to_string())?;
+            if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
+                anyhow::bail!(std::io::Error::last_os_error());
+            }
+        }
+    }
+    envs.insert(
+        String::from("LD_LIBRARY_PATH"),
+        standard::SYNOPKG_LIB.to_string(),
+    );
     Ok(())
 }
