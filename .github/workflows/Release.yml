@@ -70,7 +70,7 @@ jobs:
           mv bin/* xunlei-openwrt-${{ env.tag }}-x86_64/bin/
           cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
           mv target/x86_64-unknown-linux-musl/release/xunlei xunlei-openwrt-${{ env.tag }}-x86_64/
-          tar -czvf xunlei-openwrt-${{ env.tag }}-x86_64 xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz
+          tar -czvf xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz xunlei-openwrt-${{ env.tag }}-x86_64 
           shasum -a 256 xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz > xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz.sha256
           mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz uploads/
           mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz.sha256 uploads/
@@ -80,7 +80,7 @@ jobs:
           mv bin/* xunlei-openwrt-${{ env.tag }}-aarch64/bin/
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
           mv target/aarch64-unknown-linux-musl/release/xunlei xunlei-openwrt-${{ env.tag }}-aarch64/
-          tar -czvf xunlei-openwrt-${{ env.tag }}-aarch64  xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz
+          tar -czvf xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz xunlei-openwrt-${{ env.tag }}-aarch64
           shasum -a 256 xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz > xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz.sha256
           mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz uploads/
           mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz.sha256 uploads/
