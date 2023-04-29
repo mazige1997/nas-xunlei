@@ -150,7 +150,7 @@ jobs:
           rm -rf target/$target/debian
           rm -rf target/$target/generate-rpm
 
-    openwrt:
+  openwrt:
     name: OpenWrt Package - ${{ matrix.target.arch }}
     runs-on: ubuntu-20.04
     needs: [ linux ]
