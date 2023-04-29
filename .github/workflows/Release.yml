@@ -24,7 +24,7 @@ jobs:
 
       - name: Install depends
         run: |
-          apt update && apt install upx rename wget -y
+          apt update && apt install upx rename wget git -y
           mkdir uploads
 
       - name: Get tag
@@ -33,6 +33,13 @@ jobs:
         uses: dawidd6/action-get-tag@v1
         with:
           strip_v: true
+
+      - name: Tag Check
+        run: |
+          if [ -z "${{ steps.tag.outputs.tag }}" ]; then
+            echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
+            echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_OUTPUT
+          fi
 
       - name: Prebuild package
         id: prebuild
@@ -52,27 +59,31 @@ jobs:
           echo "SUCCESS=success" >> $GITHUB_OUTPUT
 
       - name: Build openwrt package
-        if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled() && startsWith(github.ref, 'refs/tags/')
+        if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
         shell: bash
         run: |
           arch=x86_64 bash +x unpack.sh
-          mkdir -p nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}/bin
-          mv bin/* nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}/bin/
+          mkdir -p nas-xunlei-openwrt-x86_64-${{ env.tag }}/bin
+          mv bin/* nas-xunlei-openwrt-x86_64-${{ env.tag }}/bin/
           cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
-          mv target/x86_64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}/
-          tar -cf - nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }} | xz -9 -c - > nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}.tar.xz
-          mv nas-xunlei-openwrt-x86_64-${{ steps.tag.outputs.tag }}.tar.xz uploads/
+          mv target/x86_64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-x86_64-${{ env.tag }}/
+          tar -cf - nas-xunlei-openwrt-x86_64-${{ env.tag }} | xz -9 -c - > nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz
+          shasum -a 256 nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz > nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz.sha256
+          mv nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz uploads/
+          mv nas-xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz.sha256 uploads/
 
           arch=aarch64 bash +x unpack.sh
-          mkdir -p nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/bin
-          mv bin/* nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/bin/
+          mkdir -p nas-xunlei-openwrt-aarch64-${{ env.tag }}/bin
+          mv bin/* nas-xunlei-openwrt-aarch64-${{ env.tag }}/bin/
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
-          mv target/aarch64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}/
-          tar -cf - nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }} | xz -9 -c - > nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}.tar.xz
-          mv nas-xunlei-openwrt-aarch64-${{ steps.tag.outputs.tag }}.tar.xz uploads/
+          mv target/aarch64-unknown-linux-musl/release/xunlei nas-xunlei-openwrt-aarch64-${{ env.tag }}/
+          tar -cf - nas-xunlei-openwrt-aarch64-${{ env.tag }} | xz -9 -c - > nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz
+          shasum -a 256 nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz > nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz.sha256
+          mv nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz uploads/
+          mv nas-xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz.sha256 uploads/
 
       - name: Build package
-        if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled() && startsWith(github.ref, 'refs/tags/')
+        if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
         shell: bash
         run: |
           root=$(pwd)
@@ -84,10 +95,10 @@ jobs:
           cargo deb --target=$target --no-build --no-strip
           cargo generate-rpm --target=$target --payload-compress none
           cd target/$target/release
-            tar czvf xunlei-${{ steps.tag.outputs.tag }}.$target.tar.gz xunlei
-            shasum -a 256 xunlei-${{ steps.tag.outputs.tag }}.$target.tar.gz > xunlei-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256
-            mv xunlei-${{ steps.tag.outputs.tag }}.$target.tar.gz $root/uploads/
-            mv xunlei-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256 $root/uploads/
+            tar czvf xunlei-${{ env.tag }}.$target.tar.gz xunlei
+            shasum -a 256 xunlei-${{ env.tag }}.$target.tar.gz > xunlei-${{ env.tag }}.$target.tar.gz.sha256
+            mv xunlei-${{ env.tag }}.$target.tar.gz $root/uploads/
+            mv xunlei-${{ env.tag }}.$target.tar.gz.sha256 $root/uploads/
           cd -
           mv target/$target/debian/* $root/uploads/
           mv target/$target/generate-rpm/* $root/uploads/
@@ -101,10 +112,10 @@ jobs:
           cargo deb --target=$target --no-build --no-strip
           cargo generate-rpm --target=$target --payload-compress none
           cd target/$target/release
-            tar czvf xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz xunlei
-            shasum -a 256 xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz > xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256
-            mv xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz $root/uploads/
-            mv xunlei-embed-${{ steps.tag.outputs.tag }}.$target.tar.gz.sha256 $root/uploads/
+            tar czvf xunlei-embed-${{ env.tag }}.$target.tar.gz xunlei
+            shasum -a 256 xunlei-embed-${{ env.tag }}.$target.tar.gz > xunlei-embed-${{ env.tag }}.$target.tar.gz.sha256
+            mv xunlei-embed-${{ env.tag }}.$target.tar.gz $root/uploads/
+            mv xunlei-embed-${{ env.tag }}.$target.tar.gz.sha256 $root/uploads/
           cd -
           cd target/$target/debian
             rename 's/xunlei/xunlei-embed/' xunlei*.deb
@@ -118,6 +129,13 @@ jobs:
           ls -lah uploads
           done
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: uploads
+          path: uploads/
+          if-no-files-found: error
+          
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -132,3 +150,78 @@ jobs:
         run: |
           rm -rf target/$target/debian
           rm -rf target/$target/generate-rpm
+
+  openwrt:
+    name: OpenWrt Package
+    runs-on: ubuntu-20.04
+    needs: [ linux ]
+    environment: OpenWrt
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - arch: "aarch64_generic"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+          - arch: "x86_64"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install build requirements
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y build-essential ccache ecj fastjar file g++ gawk \
+          gettext git java-propose-classpath libelf-dev libncurses5-dev \
+          libncursesw5-dev libssl-dev python2.7-dev python3 unzip wget \
+          python3-distutils python3-setuptools python3-dev rsync subversion \
+          swig time xsltproc zlib1g-dev
+      - name: Install OpenWrt SDK
+        run: |
+          set -e
+          wget -O openwrt-sdk.tar.xz ${{ matrix.target.sdk }}
+          xz -q -d openwrt-sdk.tar.xz && tar -xvf openwrt-sdk.tar
+          mv -f openwrt-sdk-* openwrt-sdk
+      - name: Build Package
+        run: |
+          set -e
+          echo "src-link xunlei $GITHUB_WORKSPACE/openwrt" > openwrt-sdk/feeds.conf
+          echo 'CONFIG_PACKAGE_xunlei=y
+          CONFIG_PACKAGE_luci-app-xunlei=y
+          ' >> openwrt-sdk/.config
+          cd openwrt-sdk
+          cat feeds.conf.default >> feeds.conf
+          cat feeds.conf
+
+          ./scripts/feeds update -a > /dev/null
+          make defconfig
+
+          ./scripts/feeds install -d y -f -a
+          make package/xunlei/compile V=s
+          make package/luci-app-xunlei/compile V=s
+          tree bin/packages/
+      - name: Archive package
+        uses: actions/upload-artifact@v3
+        with:
+          name: xunlei-openwrt-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/*/xunlei/xunlei*.ipk
+          if-no-files-found: error
+      - name: Archive luci packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: xunlei-openwrt-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/*/xunlei/luci-*.ipk
+          if-no-files-found: error
+      - name: Upload package to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: "startsWith(github.ref, 'refs/tags/')"
+        with:
+          files: |
+            openwrt-sdk/bin/packages/*/xunlei/xunlei*.ipk
+          generate_release_notes: true
+      - name: Upload luci packages to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        with:
+          files: |
+            openwrt-sdk/bin/packages/*/xunlei/luci-*.ipk
+          generate_release_notes: true

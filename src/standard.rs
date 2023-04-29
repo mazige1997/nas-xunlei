@@ -23,6 +23,10 @@ pub const SYNOPKG_PKGBASE: &str = "/var/packages/pan-xunlei-com";
 pub const SYNOPKG_PKGDEST: &str = "/var/packages/pan-xunlei-com/target";
 pub const SYNOPKG_VAR: &str = "/var/packages/pan-xunlei-com/target/var/";
 pub const SYNOPKG_HOST: &str = "/var/packages/pan-xunlei-com/target/host";
+#[cfg(all(target_os = "linux", target_env = "musl"))]
+pub const SYNOPKG_LIB: &str = "/var/packages/pan-xunlei-com/target/host/lib";
+#[cfg(all(target_os = "linux", target_env = "musl"))]
+pub const SYS_LIB: &str = "/lib";
 pub const SYNOPKG_CLI_WEB: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-web";
 #[cfg(target_arch = "x86_64")]
 pub const LAUNCHER_EXE: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.amd64";
