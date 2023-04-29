@@ -21,6 +21,23 @@ PKG_HASH:=skip
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/$(PKG_NAME)
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=nas-xunlei
+  DEPENDS:=@(aarch64||x86_64) @USE_MUSL +libgcc +libstdcpp
+  URL:=https://nas.xunlei.com/
+endef
+
+define Package/$(PKG_NAME)/description
+  Synology Nas Thunder runs on OpenWrt
+endef
+
+define Package/$(PKG_NAME)/conffiles
+/etc/config/xunlei
+endef
+
 define Download/sha256sum
 	FILE:=$(PKG_SOURCE).sha256
 	URL_FILE:=$(FILE)
@@ -40,23 +57,6 @@ endef
 
 define Build/Compile
 	echo "nas-xunlei using precompiled binary."
-endef
-
-define Package/$(PKG_NAME)
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Web Servers/Proxies
-  TITLE:=nas-xunlei
-  DEPENDS:=@(aarch64||x86_64) @USE_MUSL +libgcc +libstdcpp
-  URL:=https://nas.xunlei.com/
-endef
-
-define Package/$(PKG_NAME)/description
-  Synology Nas Thunder runs on OpenWrt
-endef
-
-define Package/xunlei/conffiles
-/etc/config/xunlei
 endef
 
 define Package/$(PKG_NAME)/postrm

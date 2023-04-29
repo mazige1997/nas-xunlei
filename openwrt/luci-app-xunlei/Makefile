@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 
 LUCI_TITLE:=LuCI support for NAS-Xunlei
 LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+gngpp
+LUCI_DEPENDS:=+xunlei
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
 define Package/$(PKG_NAME)/postinst
