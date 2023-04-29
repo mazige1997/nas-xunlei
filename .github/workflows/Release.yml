@@ -24,7 +24,7 @@ jobs:
 
       - name: Install depends
         run: |
-          apt update && apt install upx rename wget -y
+          apt update && apt install upx rename wget git -y
           mkdir uploads
 
       - name: Get tag
@@ -38,6 +38,7 @@ jobs:
         run: |
           if [ -z "${{ steps.tag.outputs.tag }}" ]; then
             echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
+            echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_OUTPUT
           fi
 
       - name: Prebuild package
