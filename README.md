@@ -3,6 +3,7 @@
 nas-xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt）的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
 
 - 只支持**X86_64**/**aarch64**
+- 支持glibc/musl
 - 内侧邀请码（3H9F7Y6D）
 
 ```shell
