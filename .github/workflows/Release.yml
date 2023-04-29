@@ -164,9 +164,9 @@ jobs:
       matrix:
         target:
           - arch: "aarch64_generic"
-            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.gz"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
           - arch: "x86_64"
-            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.gz"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
     steps:
       - uses: actions/checkout@v3
       - name: Install build requirements
@@ -181,8 +181,8 @@ jobs:
       - name: Install OpenWrt SDK
         run: |
           set -e
-          wget -O openwrt-sdk.tar.gz ${{ matrix.target.sdk }}
-          gz -q -d openwrt-sdk.tar.gz && tar -xvf openwrt-sdk.tar
+          wget -O openwrt-sdk.tar.xz ${{ matrix.target.sdk }}
+          xz -q -d openwrt-sdk.tar.xz && tar -xvf openwrt-sdk.tar
           mv -f openwrt-sdk-* openwrt-sdk
       - name: Build Package
         run: |
