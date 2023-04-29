@@ -183,7 +183,7 @@ jobs:
       - name: Build Package
         run: |
           set -e
-          echo "src-link aliyundrive $GITHUB_WORKSPACE/openwrt" > openwrt-sdk/feeds.conf
+          echo "src-link xunlei $GITHUB_WORKSPACE/openwrt" > openwrt-sdk/feeds.conf
           echo 'CONFIG_PACKAGE_xunlei=y
           CONFIG_PACKAGE_luci-app-xunlei=y
           ' >> openwrt-sdk/.config
