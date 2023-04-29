@@ -149,3 +149,78 @@ jobs:
         run: |
           rm -rf target/$target/debian
           rm -rf target/$target/generate-rpm
+
+    openwrt:
+    name: OpenWrt Package - ${{ matrix.target.arch }}
+    runs-on: ubuntu-20.04
+    needs: [ linux ]
+    environment: OpenWrt
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - arch: "aarch64_generic"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+          - arch: "x86_64"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install build requirements
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y build-essential ccache ecj fastjar file g++ gawk \
+          gettext git java-propose-classpath libelf-dev libncurses5-dev \
+          libncursesw5-dev libssl-dev python2.7-dev python3 unzip wget \
+          python3-distutils python3-setuptools python3-dev rsync subversion \
+          swig time xsltproc zlib1g-dev
+      - name: Install OpenWrt SDK
+        run: |
+          set -e
+          wget -O openwrt-sdk.tar.xz ${{ matrix.target.sdk }}
+          xz -q -d openwrt-sdk.tar.xz && tar -xvf openwrt-sdk.tar
+          mv -f openwrt-sdk-* openwrt-sdk
+      - name: Build Package
+        run: |
+          set -e
+          echo "src-link aliyundrive $GITHUB_WORKSPACE/openwrt" > openwrt-sdk/feeds.conf
+          echo 'CONFIG_PACKAGE_xunlei=y
+          CONFIG_PACKAGE_luci-app-xunlei=y
+          ' >> openwrt-sdk/.config
+          cd openwrt-sdk
+          cat feeds.conf.default >> feeds.conf
+          cat feeds.conf
+
+          ./scripts/feeds update -a > /dev/null
+          make defconfig
+
+          ./scripts/feeds install -d y -f -a
+          make package/xunlei/compile V=s
+          make package/luci-app-xunlei/compile V=s
+          tree bin/packages/
+      - name: Archive package
+        uses: actions/upload-artifact@v3
+        with:
+          name: xunlei-openwrt-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/*/xunlei/xunlei*.ipk
+          if-no-files-found: error
+      - name: Archive luci packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: xunlei-openwrt-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/*/xunlei/luci-*.ipk
+          if-no-files-found: error
+      - name: Upload package to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: "startsWith(github.ref, 'refs/tags/')"
+        with:
+          files: |
+            openwrt-sdk/bin/packages/*/xunlei/xunlei*.ipk
+          generate_release_notes: true
+      - name: Upload luci packages to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        with:
+          files: |
+            openwrt-sdk/bin/packages/*/xunlei/luci-*.ipk
+          generate_release_notes: true
