@@ -66,24 +66,24 @@ jobs:
         shell: bash
         run: |
           arch=x86_64 bash +x unpack.sh
-          mkdir -p xunlei-openwrt-x86_64-${{ env.tag }}/bin
-          mv bin/* xunlei-openwrt-x86_64-${{ env.tag }}/bin/
+          mkdir -p xunlei-openwrt-${{ env.tag }}-x86_64/bin
+          mv bin/* xunlei-openwrt-${{ env.tag }}-x86_64/bin/
           cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
-          mv target/x86_64-unknown-linux-musl/release/xunlei xunlei-openwrt-x86_64-${{ env.tag }}/
-          tar -cf - xunlei-openwrt-x86_64-${{ env.tag }} | xz -9 -c - > xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz
-          shasum -a 256 xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz > xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz.sha256
-          mv xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz uploads/
-          mv xunlei-openwrt-x86_64-${{ env.tag }}.tar.xz.sha256 uploads/
+          mv target/x86_64-unknown-linux-musl/release/xunlei xunlei-openwrt-${{ env.tag }}-x86_64/
+          tar -cf - xunlei-openwrt-${{ env.tag }}-x86_64 | xz -9 -c - > xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz
+          shasum -a 256 xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz > xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz.sha256
+          mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz uploads/
+          mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz.sha256 uploads/
 
           arch=aarch64 bash +x unpack.sh
-          mkdir -p xunlei-openwrt-aarch64-${{ env.tag }}/bin
-          mv bin/* xunlei-openwrt-aarch64-${{ env.tag }}/bin/
+          mkdir -p xunlei-openwrt-${{ env.tag }}-aarch64/bin
+          mv bin/* xunlei-openwrt-${{ env.tag }}-aarch64/bin/
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
-          mv target/aarch64-unknown-linux-musl/release/xunlei xunlei-openwrt-aarch64-${{ env.tag }}/
-          tar -cf - xunlei-openwrt-aarch64-${{ env.tag }} | xz -9 -c - > xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz
-          shasum -a 256 xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz > xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz.sha256
-          mv xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz uploads/
-          mv xunlei-openwrt-aarch64-${{ env.tag }}.tar.xz.sha256 uploads/
+          mv target/aarch64-unknown-linux-musl/release/xunlei xunlei-openwrt-${{ env.tag }}-aarch64/
+          tar -cf - xunlei-openwrt-${{ env.tag }}-aarch64 | xz -9 -c - > xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz
+          shasum -a 256 xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz > xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz.sha256
+          mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz uploads/
+          mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz.sha256 uploads/
 
       - name: Build package
         if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
