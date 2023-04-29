@@ -151,7 +151,7 @@ jobs:
           rm -rf target/$target/generate-rpm
 
   openwrt:
-    name: OpenWrt Package - ${{ matrix.target.arch }}
+    name: OpenWrt Package
     runs-on: ubuntu-20.04
     needs: [ linux ]
     environment: OpenWrt
