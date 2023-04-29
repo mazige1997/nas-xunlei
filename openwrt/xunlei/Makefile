@@ -55,7 +55,7 @@ define Package/$(PKG_NAME)/description
   Synology Nas Thunder runs on OpenWrt
 endef
 
-define Package/aliyundrive-webdav/conffiles
+define Package/xunlei/conffiles
 /etc/config/xunlei
 endef
 
