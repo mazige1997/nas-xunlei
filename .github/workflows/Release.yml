@@ -70,20 +70,20 @@ jobs:
           mv bin/* xunlei-openwrt-${{ env.tag }}-x86_64/bin/
           cargo zigbuild --release --target=x86_64-unknown-linux-musl --no-default-features --features launch
           mv target/x86_64-unknown-linux-musl/release/xunlei xunlei-openwrt-${{ env.tag }}-x86_64/
-          tar -cf - xunlei-openwrt-${{ env.tag }}-x86_64 | xz -9 -c - > xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz
-          shasum -a 256 xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz > xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz.sha256
-          mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz uploads/
-          mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.xz.sha256 uploads/
+          tar -czvf xunlei-openwrt-${{ env.tag }}-x86_64 xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz
+          shasum -a 256 xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz > xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz.sha256
+          mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz uploads/
+          mv xunlei-openwrt-${{ env.tag }}-x86_64.tar.gz.sha256 uploads/
 
           arch=aarch64 bash +x unpack.sh
           mkdir -p xunlei-openwrt-${{ env.tag }}-aarch64/bin
           mv bin/* xunlei-openwrt-${{ env.tag }}-aarch64/bin/
           cargo zigbuild --release --target=aarch64-unknown-linux-musl --no-default-features --features launch
           mv target/aarch64-unknown-linux-musl/release/xunlei xunlei-openwrt-${{ env.tag }}-aarch64/
-          tar -cf - xunlei-openwrt-${{ env.tag }}-aarch64 | xz -9 -c - > xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz
-          shasum -a 256 xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz > xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz.sha256
-          mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz uploads/
-          mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.xz.sha256 uploads/
+          tar -czvf xunlei-openwrt-${{ env.tag }}-aarch64  xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz
+          shasum -a 256 xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz > xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz.sha256
+          mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz uploads/
+          mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz.sha256 uploads/
 
       - name: Build package
         if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
@@ -164,9 +164,9 @@ jobs:
       matrix:
         target:
           - arch: "aarch64_generic"
-            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.gz"
           - arch: "x86_64"
-            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.gz"
     steps:
       - uses: actions/checkout@v3
       - name: Install build requirements
@@ -181,8 +181,8 @@ jobs:
       - name: Install OpenWrt SDK
         run: |
           set -e
-          wget -O openwrt-sdk.tar.xz ${{ matrix.target.sdk }}
-          xz -q -d openwrt-sdk.tar.xz && tar -xvf openwrt-sdk.tar
+          wget -O openwrt-sdk.tar.gz ${{ matrix.target.sdk }}
+          gz -q -d openwrt-sdk.tar.gz && tar -xvf openwrt-sdk.tar
           mv -f openwrt-sdk-* openwrt-sdk
       - name: Build Package
         run: |

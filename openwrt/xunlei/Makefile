@@ -15,7 +15,7 @@ PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_SOURCE:=xunlei-openwrt-$(PKG_VERSION)-$(ARCH).tar.xz
+PKG_SOURCE:=xunlei-openwrt-$(PKG_VERSION)-$(ARCH).tar.gz
 PKG_SOURCE_URL:=https://github.com/gngpp/nas-xunlei/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=skip
 
