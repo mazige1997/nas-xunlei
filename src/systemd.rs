@@ -17,7 +17,7 @@ use crate::Running;
 
 pub struct XunleiInstall {
     description: &'static str,
-    host: String,
+    host: std::net::IpAddr,
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,

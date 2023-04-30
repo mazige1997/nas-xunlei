@@ -10,7 +10,7 @@ use std::{
 };
 
 pub struct XunleiLauncher {
-    host: String,
+    host: std::net::IpAddr,
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,
@@ -123,8 +123,6 @@ impl XunleiLauncher {
                     if let Some(mut body) = request.data() {
                         std::io::copy(&mut body, child.stdin.as_mut().unwrap()).unwrap();
                     }
-
-
 
                     {
                         let mut stdout = std::io::BufReader::new(child.stdout.unwrap());
@@ -240,7 +238,6 @@ impl Running for XunleiLauncher {
             signal_hook::consts::SIGHUP,
             signal_hook::consts::SIGTERM,
         ])?;
-        let handle = signals.handle();
 
         let ui_envs = self.envs()?;
         let backend_envs = ui_envs.clone();
@@ -267,9 +264,8 @@ impl Running for XunleiLauncher {
                 }
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
-        handle.close();
 
-        let host = String::from(&self.host);
+        let host = self.host.to_string();
         let port = self.port;
         // run webui service
         std::thread::spawn(move || {

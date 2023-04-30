@@ -45,7 +45,7 @@ pub enum Commands {
 pub struct Config {
     /// Xunlei Listen host
     #[clap(short, long, default_value = "0.0.0.0", value_parser = parser_host)]
-    host: String,
+    host: std::net::IpAddr,
     /// Xunlei Listen port
     #[clap(short, long, default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
