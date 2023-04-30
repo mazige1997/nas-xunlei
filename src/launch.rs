@@ -248,12 +248,11 @@ impl Running for XunleiLauncher {
             .spawn(move || {
                 let mut backend_process = XunleiLauncher::run_backend(backend_envs)
                     .expect("[XunleiLauncher] An error occurred executing the backend process");
-                for _ in signals.forever() {
+                if signals.forever().next().is_some() {
                     backend_process.kill().expect(
                         "[XunleiLauncher] An error occurred terminating the backend process",
                     );
                     log::info!("[XunleiLauncher] The backend service has been terminated");
-                    break;
                 }
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
