@@ -34,8 +34,8 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         }
     }
     let sys_ld = Path::new(standard::SYS_LIB).join(LD);
-    let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
     if !sys_ld.exists() {
+        let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
         unsafe {
             let source_path = CString::new(syno_ld.display().to_string())?;
             let target_path = CString::new(sys_ld.display().to_string())?;

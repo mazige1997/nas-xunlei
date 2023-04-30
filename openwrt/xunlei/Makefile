@@ -1,9 +1,3 @@
-#
-# Copyright (C) 2015-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v3.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xunlei
@@ -13,11 +7,10 @@ PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-
 PKG_SOURCE:=xunlei-openwrt-$(PKG_VERSION)-$(ARCH).tar.gz
 PKG_SOURCE_URL:=https://github.com/gngpp/nas-xunlei/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=skip
+STRIP:=false
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +19,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=nas-xunlei
-  DEPENDS:=@(aarch64||x86_64) @USE_MUSL
+  DEPENDS:=@(aarch64||x86_64)
   URL:=https://nas.xunlei.com/
 endef
 
@@ -52,34 +45,39 @@ define Build/Prepare
 	shasum -a 256 -c $(PKG_SOURCE).sha256
 	rm $(PKG_SOURCE).sha256 $(PKG_SOURCE)
 
-	tar -C $(PKG_BUILD_DIR)/ -zxf $(DL_DIR)/$(PKG_SOURCE)
+	tar -xvf $(DL_DIR)/$(PKG_SOURCE)
+	mv xunlei-openwrt-$(PKG_VERSION)-$(ARCH)/* $(PKG_BUILD_DIR)/
 endef
 
 define Build/Compile
 	echo "nas-xunlei using precompiled binary."
 endef
 
-define Package/$(PKG_NAME)/postrm
-	#!/bin/sh
-	rm -rf /var/packages/pan-xunlei-com
-	exit 0
-endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host
-	$(CP) $(PKG_BUILD_DIR)/bin $(1)/var/packages/pan-xunlei-com/target/
+	$(CP) $(PKG_BUILD_DIR)/bin/* $(1)/var/packages/pan-xunlei-com/target/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xunlei $(1)/var/packages/pan-xunlei-com/xunlei
+
 	$(INSTALL_DIR) $(1)/usr/syno/synoman/webman/modules
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/etc
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules
-	$(INSTALL_BIN) $(CURDIR)/files/sysinfo.conf $(1)/var/packages/pan-xunlei-com/target/host/etc/sysinfo.conf
-	echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > $(1)/var/packages/pan-xunlei-com/target/host/etc/sysinfo.conf
-	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modulesauthenticate.cgi
+	$(INSTALL_BIN) $(CURDIR)/files/synoinfo.conf $(1)/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
+	echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > $(1)/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
+	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(CURDIR)/files/xunlei.init $(1)/etc/init.d/xunlei
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/xunlei.config $(1)/etc/config/xunlei
+
+	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/exploit
+	$(INSTALL_BIN) $(CURDIR)/exploit/libc.so.6 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libc.so.6
+	$(INSTALL_BIN) $(CURDIR)/exploit/libdl.so.2 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libdl.so.2
+	$(INSTALL_BIN) $(CURDIR)/exploit/libm.so.6 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libm.so.6
+	$(INSTALL_BIN) $(CURDIR)/exploit/libstdc++.so.6 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libstdc++.so.6
+	$(INSTALL_BIN) $(CURDIR)/exploit/libpthread.so.0 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libpthread.so.0
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

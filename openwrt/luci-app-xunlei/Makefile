@@ -9,10 +9,11 @@ PKG_NAME:=luci-app-xunlei
 PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
-LUCI_TITLE:=LuCI support for NAS-Xunlei
-LUCI_PKGARCH:=all
-LUCI_DEPENDS:=+xunlei
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
+
+LUCI_TITLE:=LuCI support for NAS-Xunlei
+LUCI_DEPENDS:=+xunlei
+
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
