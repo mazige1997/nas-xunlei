@@ -3,7 +3,6 @@ local m, s
 m = Map("xunlei", translate("Xunlei"))
 m.description = translate("<a>NAS Xunlei DSM 7.x Beta Version, Invitation code (3H9F7Y6D)</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">Project GitHub URL</a>")
 
-
 m:section(SimpleSection).template = "xunlei/xunlei_status"
 
 s = m:section(TypedSection, "xunlei")
