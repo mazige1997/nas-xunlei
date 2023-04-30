@@ -20,7 +20,7 @@ pub trait Running {
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
 struct Opt {
-    /// Enable debug mode
+    /// Enable debug
     #[clap(short, long, global = true)]
     debug: bool,
 
