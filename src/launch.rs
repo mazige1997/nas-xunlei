@@ -10,7 +10,7 @@ use std::{
 };
 
 pub struct XunleiLauncher {
-    internal: bool,
+    host: String,
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,
@@ -19,7 +19,7 @@ pub struct XunleiLauncher {
 impl From<Config> for XunleiLauncher {
     fn from(config: Config) -> Self {
         Self {
-            internal: config.internal,
+            host: config.host,
             port: config.port,
             download_path: config.download_path,
             config_path: config.config_path,
@@ -47,13 +47,9 @@ impl XunleiLauncher {
         Ok(child_process)
     }
 
-    fn run_ui(internal: bool, port: u16, envs: HashMap<String, String>) {
+    fn run_ui(host: String, port: u16, envs: HashMap<String, String>) {
         log::info!("[XunleiLauncher] Start Xunlei Engine UI");
-        let address = match internal {
-            true => "127.0.0.1",
-            false => "0.0.0.0",
-        };
-        rouille::start_server(format!("{}:{}", address, port), move |request| {
+        rouille::start_server(format!("{}:{}", host, port), move |request| {
             rouille::router!(request,
                 (GET) ["/webman/login.cgi"] => {
                     rouille::Response::json(&String::from(r#"{"SynoToken", ""}"#))
@@ -262,11 +258,11 @@ impl Running for XunleiLauncher {
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
 
-        let internal = self.internal;
+        let host = String::from(&self.host);
         let port = self.port;
         // run webui service
         std::thread::spawn(move || {
-            XunleiLauncher::run_ui(internal, port, ui_envs);
+            XunleiLauncher::run_ui(host, port, ui_envs);
         });
 
         backend_thread

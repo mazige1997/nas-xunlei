@@ -17,7 +17,7 @@ use crate::Running;
 
 pub struct XunleiInstall {
     description: &'static str,
-    internal: bool,
+    host: String,
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,
@@ -31,7 +31,7 @@ impl From<Config> for XunleiInstall {
         let gid = unsafe { libc::getgid() };
         Self {
             description: "Thunder remote download service",
-            internal: config.internal,
+            host: config.host,
             port: config.port,
             download_path: config.download_path,
             config_path: config.config_path,
@@ -196,7 +196,6 @@ impl XunleiInstall {
         if Systemd::support().not() {
             return Ok(());
         }
-        let internal = if self.internal { "-i" } else { "" };
         let systemctl_unit = format!(
             r#"[Unit]
                 Description={}
@@ -205,7 +204,7 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart={} launch {} -p {} -d {} -c {}
+                ExecStart={} launch -h {} -p {} -d {} -c {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
@@ -214,7 +213,7 @@ impl XunleiInstall {
                 WantedBy=multi-user.target"#,
             self.description,
             launch.display(),
-            internal,
+            self.host,
             self.port,
             self.download_path.display(),
             self.config_path.display(),

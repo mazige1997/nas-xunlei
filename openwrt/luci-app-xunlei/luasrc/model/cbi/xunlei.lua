@@ -12,12 +12,13 @@ s.anonymous = true
 o = s:option(Flag, "enabled", translate("Enabled"))
 o.rmempty = false
 
-o = s:option(Flag, "internal", translate("Internal"))
-o.rmempty = true
+o = e:option(Value, "host", translate("Host"))
+o.default = "0.0.0.0"
+o.datatype = "ipaddr"
 
 o = s:option(Value, "port", translate("Port"))
-o.datatype = "and(port,min(1))"
-o.default = "5051"
+o.datatype = "and(port,min(1025))"
+o.default = "5055"
 o.rmempty = false
 
 o = s:option(Value, "config_path", translate("Data Storage Path"))
