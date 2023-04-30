@@ -30,7 +30,7 @@ impl From<Config> for XunleiLauncher {
 impl XunleiLauncher {
     fn run_backend(envs: HashMap<String, String>) -> anyhow::Result<std::process::Child> {
         log::info!("[XunleiLauncher] Start Xunlei Engine");
-        standard::create_dir_all(&Path::new(standard::SYNOPKG_VAR), 0o755)?;
+        standard::create_dir_all(Path::new(standard::SYNOPKG_VAR), 0o755)?;
         let child_process = std::process::Command::new(standard::LAUNCHER_EXE)
             .args([
                 format!("-launcher_listen={}", standard::LAUNCHER_SOCK),
@@ -74,8 +74,8 @@ impl XunleiLauncher {
                     .env("HTTP_HOST", &request.remote_addr().to_string())
                     .env("GATEWAY_INTERFACE", "CGI/1.1")
                     .env("REQUEST_METHOD", request.method())
-                    .env("QUERY_STRING", &request.raw_query_string())
-                    .env("REQUEST_URI", &request.raw_url())
+                    .env("QUERY_STRING", request.raw_query_string())
+                    .env("REQUEST_URI", request.raw_url())
                     .env("PATH_INFO", &request.url())
                     .env("SCRIPT_NAME", ".")
                     .env("SCRIPT_FILENAME", &request.url())
@@ -100,21 +100,21 @@ impl XunleiLauncher {
                     if request.header("Content-Type").unwrap_or_default().is_empty().not() {
                         cmd.env(
                             "CONTENT_TYPE",
-                            &request.header("Content-Type").unwrap(),
+                            request.header("Content-Type").unwrap(),
                         );
                     }
 
                     if request.header("content-type").unwrap_or_default().is_empty().not() {
                         cmd.env(
                             "CONTENT_TYPE",
-                            &request.header("content-type").unwrap(),
+                            request.header("content-type").unwrap(),
                         );
                     }
 
                     if request.header("Content-Length").unwrap_or_default().is_empty().not() {
                         cmd.env(
                             "CONTENT_LENGTH",
-                            &request.header("Content-Length").unwrap(),
+                            request.header("Content-Length").unwrap(),
                         );
                     }
 
@@ -124,7 +124,9 @@ impl XunleiLauncher {
                         std::io::copy(&mut body, child.stdin.as_mut().unwrap()).unwrap();
                     }
 
-                    let response = {
+                    
+
+                    {
                         let mut stdout = std::io::BufReader::new(child.stdout.unwrap());
 
                         let mut headers = Vec::new();
@@ -152,9 +154,7 @@ impl XunleiLauncher {
                             data: rouille::ResponseBody::from_reader(stdout),
                             upgrade: None,
                         }
-                    };
-
-                    response
+                    }
                 }
             )
         });
@@ -235,7 +235,7 @@ impl Running for XunleiLauncher {
     fn launch(&self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
 
-        let mut signals = Signals::new(&[
+        let mut signals = Signals::new([
             signal_hook::consts::SIGINT,
             signal_hook::consts::SIGHUP,
             signal_hook::consts::SIGTERM,

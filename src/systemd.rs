@@ -113,7 +113,7 @@ impl XunleiInstall {
             standard::SYNO_INFO_PATH
         ));
         standard::create_dir_all(
-            &syno_info_path.parent().context(format!(
+            syno_info_path.parent().context(format!(
                 "the path: {} parent not exists",
                 syno_info_path.display()
             ))?,
@@ -143,7 +143,7 @@ impl XunleiInstall {
             standard::SYNO_AUTHENTICATE_PATH
         ));
         standard::create_dir_all(
-            &syno_authenticate_path.parent().context(format!(
+            syno_authenticate_path.parent().context(format!(
                 "directory path: {} not exists",
                 syno_authenticate_path.display()
             ))?,

@@ -93,7 +93,7 @@ impl XunleiLocalAsset {
             pb.set_position(new);
         }
         pb.finish_with_message("downloaded");
-        print!("\n");
+        println!();
 
         output_file.flush()?;
         drop(output_file);
