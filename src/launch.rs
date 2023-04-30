@@ -124,7 +124,7 @@ impl XunleiLauncher {
                         std::io::copy(&mut body, child.stdin.as_mut().unwrap()).unwrap();
                     }
 
-                    
+
 
                     {
                         let mut stdout = std::io::BufReader::new(child.stdout.unwrap());
