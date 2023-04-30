@@ -206,25 +206,27 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: xunlei-openwrt-${{ matrix.target.arch }}
-          path: openwrt-sdk/bin/packages/*/xunlei/xunlei*.ipk
+          path: openwrt-sdk/bin/packages/*/base/xunlei*.ipk
           if-no-files-found: error
       - name: Archive luci packages
         uses: actions/upload-artifact@v3
         with:
-          name: xunlei-openwrt-${{ matrix.target.arch }}
-          path: openwrt-sdk/bin/packages/*/xunlei/luci-*.ipk
+          name: xunlei-openwrt-luci-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/*/base/luci-*.ipk
           if-no-files-found: error
       - name: Upload package to GitHub Release
         uses: softprops/action-gh-release@v1
-        if: "startsWith(github.ref, 'refs/tags/')"
+        if: startsWith(github.ref, 'refs/tags/')
         with:
+          token: ${{ secrets.TOKEN }}
           files: |
-            openwrt-sdk/bin/packages/*/xunlei/xunlei*.ipk
+            openwrt-sdk/bin/packages/*/base/xunlei*.ipk
           generate_release_notes: true
       - name: Upload luci packages to GitHub Release
         uses: softprops/action-gh-release@v1
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        if: startsWith(github.ref, 'refs/tags/')
         with:
+          token: ${{ secrets.TOKEN }}
           files: |
-            openwrt-sdk/bin/packages/*/xunlei/luci-*.ipk
+            openwrt-sdk/bin/packages/*/base/luci-*.ipk
           generate_release_notes: true
