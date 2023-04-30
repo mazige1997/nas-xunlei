@@ -13,6 +13,10 @@ use clap::{Args, Parser, Subcommand};
 use std::io::Write;
 use std::path::PathBuf;
 
+pub trait Running {
+    fn launch(&self) -> anyhow::Result<()>;
+}
+
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
 struct Opt {
@@ -39,10 +43,10 @@ pub enum Commands {
 
 #[derive(Args)]
 pub struct Config {
-    /// Xunlei internal mode
-    #[clap(short, long)]
-    internal: bool,
-    /// Xunlei web-ui port
+    /// Xunlei Listen host
+    #[clap(short, long, default_value = "0.0.0.0", value_parser = parser_host)]
+    host: String,
+    /// Xunlei Listen port
     #[clap(short, long, default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
     /// Xunlei config directory
@@ -109,6 +113,10 @@ pub(crate) fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
     ))
 }
 
-pub trait Running {
-    fn launch(&self) -> anyhow::Result<()>;
+// address parser
+pub(crate) fn parser_host(s: &str) -> anyhow::Result<std::net::IpAddr> {
+    let addr = s
+        .parse::<std::net::IpAddr>()
+        .map_err(|_| anyhow::anyhow!(format!("`{}` isn't a ip address", s)))?;
+    Ok(addr)
 }

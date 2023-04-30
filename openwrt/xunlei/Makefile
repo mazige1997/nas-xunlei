@@ -51,7 +51,6 @@ endef
 
 define Build/Compile
 	echo "nas-xunlei using precompiled binary."
-	bash genid.sh
 endef
 
 define Package/$(PKG_NAME)/postrm

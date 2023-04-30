@@ -1,3 +1,5 @@
+use signal_hook::iterator::Signals;
+
 use crate::{standard, Config, Running};
 use std::{
     collections::HashMap,
@@ -8,7 +10,7 @@ use std::{
 };
 
 pub struct XunleiLauncher {
-    internal: bool,
+    host: String,
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,
@@ -17,7 +19,7 @@ pub struct XunleiLauncher {
 impl From<Config> for XunleiLauncher {
     fn from(config: Config) -> Self {
         Self {
-            internal: config.internal,
+            host: config.host,
             port: config.port,
             download_path: config.download_path,
             config_path: config.config_path,
@@ -27,7 +29,7 @@ impl From<Config> for XunleiLauncher {
 
 impl XunleiLauncher {
     fn run_backend(envs: HashMap<String, String>) -> anyhow::Result<std::process::Child> {
-        log::info!("[XunleiDaemon] Start Xunlei Engine");
+        log::info!("[XunleiLauncher] Start Xunlei Engine");
         standard::create_dir_all(&Path::new(standard::SYNOPKG_VAR), 0o755)?;
         let child_process = std::process::Command::new(standard::LAUNCHER_EXE)
             .args([
@@ -41,17 +43,13 @@ impl XunleiLauncher {
             .spawn()
             .expect("failed to spawn child process");
         let child_pid = child_process.id() as libc::pid_t;
-        log::info!("[XunleiDaemon] Backend pid: {}", child_pid);
+        log::info!("[XunleiLauncher] Backend pid: {}", child_pid);
         Ok(child_process)
     }
 
-    fn run_ui(internal: bool, port: u16, envs: HashMap<String, String>) {
-        log::info!("[XunleiDaemon] Start Xunlei Engine UI");
-        let address = match internal {
-            true => "127.0.0.1",
-            false => "0.0.0.0",
-        };
-        rouille::start_server(format!("{}:{}", address, port), move |request| {
+    fn run_ui(host: String, port: u16, envs: HashMap<String, String>) {
+        log::info!("[XunleiLauncher] Start Xunlei Engine UI");
+        rouille::start_server(format!("{}:{}", host, port), move |request| {
             rouille::router!(request,
                 (GET) ["/webman/login.cgi"] => {
                     rouille::Response::json(&String::from(r#"{"SynoToken", ""}"#))
@@ -236,34 +234,42 @@ impl XunleiLauncher {
 impl Running for XunleiLauncher {
     fn launch(&self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
-        let envs = self.envs()?;
-        let mut backend_process = XunleiLauncher::run_backend(envs.clone())?;
+
+        let mut signals = Signals::new(&[
+            signal_hook::consts::SIGINT,
+            signal_hook::consts::SIGHUP,
+            signal_hook::consts::SIGTERM,
+        ])?;
+
+        let ui_envs = self.envs()?;
+        let backend_envs = ui_envs.clone();
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
             .spawn(move || {
-                let status = backend_process
-                    .wait()
-                    .expect("Failed to wait child process");
-                if status.success() {
-                    log::info!("[XunleiDaemon] Xunlei backend has exit(0)")
+                let mut backend_process = XunleiLauncher::run_backend(backend_envs)
+                    .expect("[XunleiLauncher] An error occurred executing the backend process");
+                for _ in signals.forever() {
+                    backend_process.kill().expect(
+                        "[XunleiLauncher] An error occurred terminating the backend process",
+                    );
+                    log::info!("[XunleiLauncher] The backend service has been terminated");
+                    break;
                 }
             })
-            .expect("Failed to start backend thread");
+            .expect("[XunleiLauncher] Failed to start backend thread");
 
-        let internal = self.internal;
+        let host = String::from(&self.host);
         let port = self.port;
-        let ui_thread: JoinHandle<_> = Builder::new()
-            .name("ui".to_string())
-            .spawn(move || {
-                XunleiLauncher::run_ui(internal, port, envs);
-            })
-            .expect("Failed to start ui thread");
+        // run webui service
+        std::thread::spawn(move || {
+            XunleiLauncher::run_ui(host, port, ui_envs);
+        });
 
-        // waiting... child thread exit
         backend_thread
             .join()
-            .expect("Failed to join backend_thread");
-        ui_thread.join().expect("Failed to join ui_thread");
+            .expect("[XunleiLauncher] Failed to join thread");
+
+        log::info!("[XunleiLauncher] All services have been complete");
         Ok(())
     }
 }

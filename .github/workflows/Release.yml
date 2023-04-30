@@ -38,10 +38,8 @@ jobs:
         run: |
           echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_ENV
           echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
-          git config --global --add safe.directory /__w/nas-xunlei/nas-xunlei/
           if [ -z "${{ steps.tag.outputs.tag }}" ]; then
-            echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
-            echo "tag=$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Prebuild package
@@ -206,13 +204,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: xunlei-openwrt-${{ matrix.target.arch }}
-          path: openwrt-sdk/bin/packages/*/base/xunlei*.ipk
+          path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/xunlei*.ipk
           if-no-files-found: error
       - name: Archive luci packages
         uses: actions/upload-artifact@v3
         with:
           name: xunlei-openwrt-luci-${{ matrix.target.arch }}
-          path: openwrt-sdk/bin/packages/*/base/luci-*.ipk
+          path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/luci-*.ipk
           if-no-files-found: error
       - name: Upload package to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -220,7 +218,7 @@ jobs:
         with:
           token: ${{ secrets.TOKEN }}
           files: |
-            openwrt-sdk/bin/packages/*/base/xunlei*.ipk
+            openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/xunlei*.ipk
           generate_release_notes: true
       - name: Upload luci packages to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -228,5 +226,5 @@ jobs:
         with:
           token: ${{ secrets.TOKEN }}
           files: |
-            openwrt-sdk/bin/packages/*/base/luci-*.ipk
+            openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/luci-*.ipk
           generate_release_notes: true
