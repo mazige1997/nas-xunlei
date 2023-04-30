@@ -51,8 +51,14 @@ endef
 
 define Build/Compile
 	echo "nas-xunlei using precompiled binary."
+	bash genid.sh
 endef
 
+define Package/$(PKG_NAME)/postrm
+#!/bin/sh
+  rm -rf /var/packages/pan-xunlei-com
+  exit 0
+endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target
@@ -64,7 +70,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/etc
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules
 	$(INSTALL_BIN) $(CURDIR)/files/synoinfo.conf $(1)/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
-	echo "unique=\"synology_$(cat /proc/sys/kernel/random/uuid | cut -c1-7)_720+\"" > $(1)/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
 	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
 
 	$(INSTALL_DIR) $(1)/etc/init.d
