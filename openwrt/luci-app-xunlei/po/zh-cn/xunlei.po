@@ -1,8 +1,8 @@
 msgid "Xunlei"
-msgstr "迅雷下载"
+msgstr "迅雷"
 
-msgid "NAS Xunlei DSM 7.x Beta Version. Invitation code (3H9F7Y6D)"
-msgstr "NAS 迅雷下载 DSM 7.x 内测版。邀请码（3H9F7Y6D）"
+msgid "<a>NAS Xunlei DSM 7.x Beta Version, Invitation code (3H9F7Y6D)</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">Project GitHub URL</a>"
+msgstr "<a>NAS 迅雷 DSM 7.x 内测版，邀请码（3H9F7Y6D）</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">GitHub 项目地址</a>"
 
 msgid "Enabled"
 msgstr "启用"
