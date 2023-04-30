@@ -20,10 +20,10 @@ o.datatype = "and(port,min(1))"
 o.default = "5051"
 o.rmempty = false
 
-o = s:option(Value, "download_path", translate("Default Download Path"))
-o.default = "/tmp/downloads"
-
 o = s:option(Value, "config_path", translate("Data Storage Path"))
 o.default = "/var/packages/pan-xunlei-com"
+
+o = s:option(Value, "download_path", translate("Default Download Path"))
+o.default = "/tmp/downloads"
 
 return m
