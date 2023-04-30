@@ -240,6 +240,7 @@ impl Running for XunleiLauncher {
             signal_hook::consts::SIGHUP,
             signal_hook::consts::SIGTERM,
         ])?;
+        let handle = signals.handle();
 
         let ui_envs = self.envs()?;
         let backend_envs = ui_envs.clone();
@@ -248,14 +249,25 @@ impl Running for XunleiLauncher {
             .spawn(move || {
                 let mut backend_process = XunleiLauncher::run_backend(backend_envs)
                     .expect("[XunleiLauncher] An error occurred executing the backend process");
-                if signals.forever().next().is_some() {
-                    backend_process.kill().expect(
-                        "[XunleiLauncher] An error occurred terminating the backend process",
-                    );
-                    log::info!("[XunleiLauncher] The backend service has been terminated");
+                for signal in signals.forever() {
+                    match signal {
+                        signal_hook::consts::SIGINT |
+                        signal_hook::consts::SIGHUP |
+                        signal_hook::consts::SIGTERM => {
+                            backend_process.kill().expect(
+                                "[XunleiLauncher] An error occurred terminating the backend process",
+                            );
+                            log::info!("[XunleiLauncher] The backend service has been terminated");
+                            break;
+                        },
+                        _ => {
+                            log::warn!("[XunleiLauncher] The system receives an unprocessed signal")
+                        },
+                    }
                 }
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
+        handle.close();
 
         let host = String::from(&self.host);
         let port = self.port;
