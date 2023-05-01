@@ -6,8 +6,9 @@ use std::{
     collections::HashMap,
     io::Read,
     ops::Not,
+    os::unix::prelude::PermissionsExt,
     path::{Path, PathBuf},
-    process::Stdio, os::unix::prelude::PermissionsExt,
+    process::Stdio,
 };
 
 pub struct XunleiLauncher {
@@ -35,10 +36,7 @@ impl XunleiLauncher {
         if var_path.exists().not() {
             std::fs::create_dir(var_path)?;
             std::fs::set_permissions(var_path, std::fs::Permissions::from_mode(0o755)).context(
-                format!(
-                    "Failed to set permissions: {} -- 755",
-                    var_path.display()
-                ),
+                format!("Failed to set permissions: {} -- 755", var_path.display()),
             )?;
         }
         let child_process = std::process::Command::new(standard::LAUNCHER_EXE)
