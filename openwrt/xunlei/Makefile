@@ -55,7 +55,7 @@ endef
 
 define Package/$(PKG_NAME)/postrm
 #!/bin/sh
-  rm -rf 
+  rm -rf /usr/share/xunlei
   rm -rf /usr/syno/synoman/webman/modules
   exit 0
 endef
