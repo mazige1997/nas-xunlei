@@ -164,7 +164,7 @@ jobs:
           - arch: "aarch64_generic"
             sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
           - arch: "x86_64"
-            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+            sdk: "https://downloads.openwrt.org/releases/18.06.9/targets/x86/64/openwrt-sdk-18.06.9-x86-64_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
     steps:
       - uses: actions/checkout@v3
       - name: Install build requirements
@@ -207,7 +207,7 @@ jobs:
           path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/xunlei*.ipk
           if-no-files-found: error
       - name: Archive luci packages
-        if: ${{ matrix.target.arch == 'aarch64_generic' }}
+        if: ${{ matrix.target.arch == 'x86_64' }}
         uses: actions/upload-artifact@v3
         with:
           name: xunlei-openwrt-luci-${{ matrix.target.arch }}
@@ -223,7 +223,7 @@ jobs:
           generate_release_notes: true
       - name: Upload luci packages to GitHub Release
         uses: softprops/action-gh-release@v1
-        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.target.arch == 'aarch64_generic' }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.target.arch == 'x86_64' }}
         with:
           token: ${{ secrets.TOKEN }}
           files: |
