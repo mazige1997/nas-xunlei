@@ -13,7 +13,7 @@ PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
 LUCI_TITLE:=LuCI support for NAS-Xunlei
 LUCI_DEPENDS:=+xunlei
-
+LUCI_PKGARCH:=all
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
