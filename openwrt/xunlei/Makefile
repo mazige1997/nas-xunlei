@@ -27,10 +27,6 @@ define Package/$(PKG_NAME)/description
   Synology Nas Thunder runs on OpenWrt
 endef
 
-define Package/$(PKG_NAME)/conffiles
-/etc/config/xunlei
-endef
-
 define Download/sha256sum
 	FILE:=$(PKG_SOURCE).sha256
 	URL_FILE:=$(FILE)
