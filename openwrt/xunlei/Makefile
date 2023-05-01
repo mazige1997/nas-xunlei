@@ -61,7 +61,7 @@ define Package/$(PKG_NAME)/postrm
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INCLUDE_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xunlei $(1)/usr/bin/xunlei
 	$(INSTALL_DIR) $(1)/usr/share/xunlei
 	$(INSTALL_DIR) $(1)/usr/share/xunlei/target
@@ -79,7 +79,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/xunlei.config $(1)/etc/config/xunlei
 
-	$(INSTALL_DIR) $(1)/target/host/exploit
+	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/host/exploit
 	$(INSTALL_BIN) $(CURDIR)/exploit/libc.so.6 $(1)/usr/share/xunlei/target/host/exploit/libc.so.6
 	$(INSTALL_BIN) $(CURDIR)/exploit/libdl.so.2 $(1)/usr/share/xunlei/target/host/exploit/libdl.so.2
 	$(INSTALL_BIN) $(CURDIR)/exploit/libm.so.6 $(1)/usr/share/xunlei/target/host/exploit/libm.so.6
