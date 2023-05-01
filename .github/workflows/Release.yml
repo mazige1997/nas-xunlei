@@ -207,6 +207,7 @@ jobs:
           path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/xunlei*.ipk
           if-no-files-found: error
       - name: Archive luci packages
+        if: ${{ matrix.target.arch == 'aarch64_generic' }}
         uses: actions/upload-artifact@v3
         with:
           name: xunlei-openwrt-luci-${{ matrix.target.arch }}
@@ -222,7 +223,7 @@ jobs:
           generate_release_notes: true
       - name: Upload luci packages to GitHub Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.target.arch == 'aarch64_generic' }}
         with:
           token: ${{ secrets.TOKEN }}
           files: |
