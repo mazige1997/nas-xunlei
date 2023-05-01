@@ -61,16 +61,18 @@ define Package/$(PKG_NAME)/postrm
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target
-	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host
-	$(CP) $(PKG_BUILD_DIR)/bin/* $(1)/var/packages/pan-xunlei-com/target/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xunlei $(1)/var/packages/pan-xunlei-com/xunlei
+	$(INCLUDE_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xunlei $(1)/usr/bin/xunlei
+	$(INCLUDE_DIR) $(1)/usr/share/xunlei
+	$(INSTALL_DIR) $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target
+	$(INSTALL_DIR) $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host
+	$(CP) $(PKG_BUILD_DIR)/bin/* $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/
 
 	$(INSTALL_DIR) $(1)/usr/syno/synoman/webman/modules
-	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/etc
-	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules
-	$(INSTALL_BIN) $(CURDIR)/files/synoinfo.conf $(1)/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
-	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
+	$(INSTALL_DIR) $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/etc
+	$(INSTALL_DIR) $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules
+	$(INSTALL_BIN) $(CURDIR)/files/synoinfo.conf $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
+	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(CURDIR)/files/xunlei.init $(1)/etc/init.d/xunlei
@@ -78,11 +80,11 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) $(CURDIR)/files/xunlei.config $(1)/etc/config/xunlei
 
 	$(INSTALL_DIR) $(1)/var/packages/pan-xunlei-com/target/host/exploit
-	$(INSTALL_BIN) $(CURDIR)/exploit/libc.so.6 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libc.so.6
-	$(INSTALL_BIN) $(CURDIR)/exploit/libdl.so.2 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libdl.so.2
-	$(INSTALL_BIN) $(CURDIR)/exploit/libm.so.6 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libm.so.6
-	$(INSTALL_BIN) $(CURDIR)/exploit/libstdc++.so.6 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libstdc++.so.6
-	$(INSTALL_BIN) $(CURDIR)/exploit/libpthread.so.0 $(1)/var/packages/pan-xunlei-com/target/host/exploit/libpthread.so.0
+	$(INSTALL_BIN) $(CURDIR)/exploit/libc.so.6 $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/exploit/libc.so.6
+	$(INSTALL_BIN) $(CURDIR)/exploit/libdl.so.2 $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/exploit/libdl.so.2
+	$(INSTALL_BIN) $(CURDIR)/exploit/libm.so.6 $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/exploit/libm.so.6
+	$(INSTALL_BIN) $(CURDIR)/exploit/libstdc++.so.6 $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/exploit/libstdc++.so.6
+	$(INSTALL_BIN) $(CURDIR)/exploit/libpthread.so.0 $(1)/usr/share/xunlei/var/packages/pan-xunlei-com/target/host/exploit/libpthread.so.0
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
