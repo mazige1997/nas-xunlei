@@ -7,9 +7,6 @@ msgstr "<a>NAS 迅雷 DSM 7.x 内测版，邀请码（3H9F7Y6D）</a> | <a href=
 msgid "Enabled"
 msgstr "启用"
 
-msgid "Internal"
-msgstr "内网访问"
-
 msgid "RUNNING"
 msgstr "运行中"
 
