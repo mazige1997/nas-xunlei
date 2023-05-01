@@ -244,22 +244,20 @@ impl Running for XunleiLauncher {
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
             .spawn(move || {
-                let mut backend_process = XunleiLauncher::run_backend(backend_envs)
+                let backend_process = XunleiLauncher::run_backend(backend_envs)
                     .expect("[XunleiLauncher] An error occurred executing the backend process");
                 for signal in signals.forever() {
                     match signal {
-                        signal_hook::consts::SIGINT |
-                        signal_hook::consts::SIGHUP |
-                        signal_hook::consts::SIGTERM => {
-                            backend_process.kill().expect(
-                                "[XunleiLauncher] An error occurred terminating the backend process",
-                            );
+                        signal_hook::consts::SIGINT
+                        | signal_hook::consts::SIGHUP
+                        | signal_hook::consts::SIGTERM => {
+                            unsafe { libc::kill(backend_process.id() as i32, libc::SIGTERM) };
                             log::info!("[XunleiLauncher] The backend service has been terminated");
                             break;
-                        },
+                        }
                         _ => {
                             log::warn!("[XunleiLauncher] The system receives an unprocessed signal")
-                        },
+                        }
                     }
                 }
             })
