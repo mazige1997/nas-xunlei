@@ -1,3 +1,4 @@
+use anyhow::Context;
 use signal_hook::iterator::Signals;
 
 use crate::{standard, Config, Running};
@@ -6,7 +7,7 @@ use std::{
     io::Read,
     ops::Not,
     path::{Path, PathBuf},
-    process::Stdio,
+    process::Stdio, os::unix::prelude::PermissionsExt,
 };
 
 pub struct XunleiLauncher {
@@ -30,7 +31,16 @@ impl From<Config> for XunleiLauncher {
 impl XunleiLauncher {
     fn run_backend(envs: HashMap<String, String>) -> anyhow::Result<std::process::Child> {
         log::info!("[XunleiLauncher] Start Xunlei Engine");
-        standard::create_dir_all(Path::new(standard::SYNOPKG_VAR), 0o755)?;
+        let var_path = Path::new(standard::SYNOPKG_VAR);
+        if var_path.exists().not() {
+            std::fs::create_dir(var_path)?;
+            std::fs::set_permissions(var_path, std::fs::Permissions::from_mode(0o755)).context(
+                format!(
+                    "Failed to set permissions: {} -- 755",
+                    var_path.display()
+                ),
+            )?;
+        }
         let child_process = std::process::Command::new(standard::LAUNCHER_EXE)
             .args([
                 format!("-launcher_listen={}", standard::LAUNCHER_SOCK),

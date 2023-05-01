@@ -21,7 +21,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
 
     let libc_path = std::path::Path::new(standard::SYNOPKG_LIB);
     if !libc_path.exists() {
-        std::fs::create_dir(libc_path)?;
+        std::fs::create_dir(&libc_path)?;
     }
     for filename in Asset::iter()
         .map(|v| v.into_owned())
@@ -35,7 +35,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     }
     let sys_ld = Path::new(standard::SYS_LIB).join(LD);
     if sys_ld.exists() {
-        std::fs::remove_file(sys_ld)?;
+        std::fs::remove_file(&sys_ld)?;
     }
     let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
     unsafe {
