@@ -55,11 +55,11 @@ GitHub [Releases](https://github.com/gngpp/nas-xunlei/releases) 中有预编译�
 ```shell
 wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/xunlei_3.5.2-1_aarch64_generic.ipk
 wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/luci-app-xunlei_1.0.1_all.ipk
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/luci-i18n-xunlei-zh-cn_git-23.121.09102-29a9551_all.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/luci-i18n-xunlei-zh-cn_1.0.1-1_all.ipk
 
 opkg install xunlei_3.5.2-1_aarch64_generic.ipk
 opkg install luci-app-xunlei_1.0.1_all.ipk
-opkg install luci-i18n-xunlei-zh-cn_git-23.121.09102-29a9551_all.ipk
+opkg install luci-i18n-xunlei-zh-cn_1.0.1-1_all.ipk
 ```
 
 ### 自行编译
