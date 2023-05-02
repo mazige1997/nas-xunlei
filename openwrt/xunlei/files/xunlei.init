@@ -8,7 +8,7 @@ get_config() {
 	config_get_bool enabled $1 enabled 0
 	config_get host $1 host "0.0.0.0"
 	config_get port $1 port 5051
-	config_get config_path $1 config_path "/var/packages/pan-xunlei-com"
+	config_get config_path $1 config_path "/etc/xunlei"
 	config_get download_path $1 download_path "/tmp/downloads"
 }
 
@@ -21,6 +21,10 @@ start_service() {
 		id=$(cat /proc/sys/kernel/random/uuid | cut -c1-7)
 		echo "unique=\"synology_${id}_720+\"" > /usr/share/xunlei/target/host/etc/synoinfo.conf
 	fi 
+
+	fi [ ! -d "/etc/xunlei" ];then
+		mkdir /etc/xunlei
+	fi
 
 	if [ -f /etc/synoinfo.conf ];then
 		rm /etc/synoinfo.conf
