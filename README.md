@@ -78,3 +78,11 @@ bash +x ./unpack.sh && cargo build --release --features embed && mv target/relea
 # 若系统不支持systemctl，则手动启动daemon
 ./xunlei launch
 ```
+
+### OpenWrt编译
+
+```shell
+svn co https://github.com/gngpp/nas-xunlei/trunk/openwrt  package/xunlei
+make menuconfig # choose LUCI->Applications->Luci-app-xunlei  
+make V=s
+```
