@@ -49,6 +49,6 @@ service_triggers() {
 
 reload_service() {
 	stop
-	sleep 3
+	sleep 5
 	start
 }
