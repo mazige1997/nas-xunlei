@@ -11,7 +11,7 @@ else
  arch=$(uname -m);
 fi
 
-wget https://down.sandai.net/nas/nasxunlei-DSM7-${arch}.spk
+wget https://github.com/mazige1997/dockeropenwrt/blob/main/nasxunlei-DSM7-${arch}.spk
 
 tar --wildcards -Oxf $(find . -type f -name \*-${arch}.spk | head -n1) package.tgz | tar --wildcards -xJC ${dir} 'bin/bin/*' 'ui/index.cgi'
 mv ${dir}/bin/bin/* ${dir}/
