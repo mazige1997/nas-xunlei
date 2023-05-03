@@ -22,7 +22,7 @@ o.default = "5055"
 o.rmempty = false
 
 o = s:option(Value, "config_path", translate("Data Storage Path"))
-o.default = "/var/packages/pan-xunlei-com"
+o.default = "/etc/xunlei"
 
 o = s:option(Value, "download_path", translate("Default Download Path"))
 o.default = "/tmp/downloads"
